@@ -1,3 +1,24 @@
+%------------------
+%Tutorial examples:
+%------------------
+
+%Comment the line in Current code runs here 
+%Uncomment the lines that you want to run then run the file
+
+
+%Examples of simulated trajectory dataset generation: 
+%-----------------------------------------------------
+
+% Circles: 10/ motors:1 / error types: normal/off/
+% processing_simulation(1, 'trajectory_dataset_name', 'example_trajectory_dataset_circles_10_motors1_errors_0001', 'circles', 1, 'circle_number', 10, 'selection_erreures_moteur', [0,1])
+
+% Lines: 5/ motors:1,3 / error types: normal/off/stutter/lag/speed-cap/steady-state
+%processing_simulation(1,'trajectory_dataset_name','example_trajectory_dataset_lines_5_motors13_errors_000102030405','lines',1,'line_number',5,'selection_erreures_moteur'[0,1,3,11,13,16,18,21,23])
+
+% Lines: 1, Interpolations: 1 / motors:1,2,3 / error types: normal/stutter/lag/steady-state
+% processing_simulation(1,'trajectory_dataset_name','example_trajectory_dataset_lines_1_interpolations_1_motors123_errors_00020305','lines',1,'line_number',1,'interpolations',1,'interpolation_number',1,'selection_erreures_moteur', [0,6,7,8,11,12,13,21,22,23])
+
+
 %Examples of training a given AI model with a given dataset: 
 %----------------------------------------------------------------------
 
@@ -22,9 +43,6 @@
 
 %____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________ 
 %____________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________________  
-
-
-
 
 function []= processing_simulation(varargin)
 %--------------------------------------------------------------------------
@@ -122,11 +140,16 @@ function []= processing_simulation(varargin)
 %
 %Outputs:
 %""""""""
+
 %--------------------------------------------------------------------------
     %Parsing the intput arguments to enable the setup of default values
     
     % Create an input parser
     p = inputParser;
+
+    % Add the subpath of the digital models.
+    addpath('../digital_model_complete/')
+    addpath('../digital_model_kinematics/')
     
     % Define optional input arguments with default values
     addRequired(p, 'simulating', @isnumeric); 
@@ -261,19 +284,22 @@ function []= processing_simulation(varargin)
     end
     if realistic_trajs
         [realistic_trajs_set,realistic_trajs_representative_point_set]= createRandomPickupList(realistic_trajs_number,nb_points_traj, zero_amount,average_smallest_motive_lenght);
-        for i = 1:5
-
-      %  disp("point commands for motor " + string(i))
-       % disp(realistic_trajs_representative_point_set{1,1}{1,i})
-
-        end
+      %   for i = 1:5
+      % 
+      % %  disp("point commands for motor " + string(i))
+      %  % disp(realistic_trajs_representative_point_set{1,1}{1,i})
+      % 
+      %   end
 
         thirdtype=1;
     end
+
+    % Load the simulink model.
     if simulating
        load_system(model_name);
     end
 
+    % Parametrize the simulink model.
     global joint1_damping;
     joint1_damping = p.Results.joint1_damping;
     assignin('base','joint1_damping',joint1_damping )
@@ -327,9 +353,7 @@ function []= processing_simulation(varargin)
     
     global simOut;
     
-    %put all the variables in the workspace 
-
-    
+    %put all the variables in the workspace     
     %simul length: len_time_series/100= legnth of simulation in seconds
 
     scale_factor = rand();
@@ -347,9 +371,8 @@ function []= processing_simulation(varargin)
     targets = zeros(len_time_series,3);
     assignin('base','targets', targets)
 
+    
     %Creating dataset
-
-
     m0=[transpose(1:len_time_series), zeros(len_time_series, 1)];
     m1=[transpose(1:len_time_series), ones(len_time_series, 1)];
 
@@ -358,7 +381,7 @@ function []= processing_simulation(varargin)
     end
     
     dataset=[];
-    scale_factor = rand();
+    % Run simulation for different failure types.
     if firsttype
         dataset_1=[];
         shapes_dict=reduced_adapted_shape_set;
@@ -380,16 +403,16 @@ function []= processing_simulation(varargin)
                 disp("------------------------")
                 disp("K =3/4 HAS BEEN REACHED")
                 disp("------------------------")
-            end
-            
+            end            
         
             shape=shapelist{k};
             disp("------------------------")
             fprintf('Shape name:%s\n',shape);
-            disp("------------------------")
-        
+            disp("------------------------")        
         
             trajectory_motor_command=cell(1, 5);
+
+            % From the x, y, z command, get the command on each motor.
             for t = 1:len_time_series
                 t_echantillon=t/500;
                 datapoint =[shapes_dict.(shape).xequation(t_echantillon), shapes_dict.(shape).yequation(t_echantillon), shapes_dict.(shape).zequation(t_echantillon)];
@@ -397,15 +420,12 @@ function []= processing_simulation(varargin)
                 spline(t,:)  = datapoint;
                 assignin('base','spline', spline)
                 targets(t,:) = datapoint;
-                assignin('base','targets', targets)
-        
-                
-                
+                assignin('base','targets', targets)       
+                                
                 if t>1 
                     guesses = [j1(t-1,1),j2(t-1,1),j3(t-1,1),j4(t-1,1),j5(t-1,1)];
                     assignin('base','guesses', guesses)
-                end
-            
+                end            
         
                 [outputVec,statusFlag] = solve(ik,datapoint,guesses);
                 j1(t,1) = outputVec(1);
@@ -422,9 +442,9 @@ function []= processing_simulation(varargin)
             
             dataset_1=[dataset_1,five_motor_command_simulation(trajectory_motor_command,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower,stationary_error,stationary_error_timestap,k,num_classes)];
         end
-            dataset = [dataset,dataset_1];   
-            fprintf("The final size of the dataset1 is %s", mat2str(size(dataset_1)));
-            v1=mat2str(size(dataset_1));
+        dataset = [dataset,dataset_1];   
+        fprintf("The final size of the dataset1 is %s", mat2str(size(dataset_1)));
+        v1=mat2str(size(dataset_1));
     end 
 
     if secondtype
@@ -566,6 +586,8 @@ function []= processing_simulation(varargin)
         fprintf("The final size of the dataset2 is %s", mat2str(size(dataset_3)));
         v2=mat2str(size(dataset_3));
     end
+
+    % Initialize variables for the simulation.
     if simulating
         % Specify the size of each submatrix (6x1000)
         fprintf("The final size of the fulldataset is %s", mat2str(size(dataset)));
@@ -578,11 +600,20 @@ function []= processing_simulation(varargin)
         % Use mat2cell to convert the dataset into a cell array
         cellArray = mat2cell(dataset, rowDist);
         %disp(size(cellArray))
+        % Define folder and filename
+        folderName = 'generated_data';
+        fileName = trajectory_dataset_name;
+        filePath = fullfile(folderName, fileName);
         
-        save(trajectory_dataset_name, 'cellArray');
+        % Check if the folder exists
+        if ~exist(folderName, 'dir')
+            % If the folder does not exist, create it
+            mkdir(folderName);
+        end       
+
+        save(filePath, 'cellArray');
         disp('Dataset saved')
         % Now, cellArray is a cell array where each cell is a 6x1000 matrix
-
     end 
 
     %Running the rain_predict_file
@@ -595,19 +626,7 @@ function []= processing_simulation(varargin)
     %run("optimum_train_predict.m")
 
     %%% end of experimental section %%%
-
-
 end
-
-
-
-
-
-
-
-
-
-
 
 %Support functions
 
@@ -632,6 +651,7 @@ function reducedStruct = reduceStructureSize(inputStruct, n)
     end
 end
 
+
 %function1
 function R = calculateRotationMatrix(anglexy, anglexz, angleyz)
     % Conversion des angles en radians
@@ -649,10 +669,11 @@ function R = calculateRotationMatrix(anglexy, anglexz, angleyz)
 end
 
 
+
 %function2
 function newCell = multiplyandsum(r,matrix1,Cell,matrix2)
 
-newCell = cell(size(Cell));
+   newCell = cell(size(Cell));
    for i=1:numel(Cell)
       
 
@@ -660,6 +681,7 @@ newCell = cell(size(Cell));
        newCell{i}= scaledfunction;
    end
 end
+
 
 %function3
 function structure3 = mergeStructures(structure1, structure2)
@@ -677,48 +699,46 @@ function structure3 = mergeStructures(structure1, structure2)
 end
 
 
-
 %function4
 function [circlelist] = CreateCircleList(max_rayon,max_eloignement_centre)
-        %il va falloir limitter les paramètres maximum de la génération de
-        %form en fonction du mouvement permi par le bras
-        %pas de 0.01 choisi dans premières boucles for experimentalement
-        %valeures de min et max eloignement aussi
-        %Valeures charac du robot
-        min_eloignement=0.02;
-        max_eloignement=0.28;
-        circlelist=struct();
-        x_prime_z_prime_y_prime_coords={@(t) cos(2*pi*t);@(t) sin(2*pi*t);@(t) 0};
-        for e_h=10:1:max_eloignement_centre*100                      %on itère sur les rayons possibles#changer incrémentation
-            e=e_h*0.01;
-            for r_h =1:1:max_rayon*100                             %on itère sur l'éloignement au centre possible #changer incrémentation?
-                r=r_h*0.01;
-                %condition d'appliquabilité à la simulation,trop forte
-                %vire des points qui marche mais peu de calculs
-                if (abs(e-r)<min_eloignement) || (e+r<min_eloignement) || (e+r>max_eloignement) || (abs(e-r)>max_eloignement)
-                    continue
-                end
-                for anglexy=0:120:360                         %on explore les plans possibles en effectuant des rotations du plan xy autour de z
-                    for anglexz=0:120:360                     %on explore les plans possibles en effectuant des rotations du plan xz autour de y
-                        for angleyz=0:120:360                 %on explore les plans possibles en effectuant des rotations du plan yz autour de x          
-                            for anglez=0:120:360              %on génère par incrément de 1 degré un "cercle" formé des centre des cercles que l'on va tracer à la distance voulue sur le plan z
-                                for anglex=0:120:360          %on génère par incrément de 1 degré un "cercle" formé des centre des cercles que l'on va tracer à la distance voulue sur le plan x
-                                    for angley=0:120:360      %on génère par incrément de 1 degré un "cercle" formé des centre des cercles que l'on va tracer à la distance voulue sur le plan y
-                                        %coordonnées du centre du cercle
-                                        %tracé
-                                        ecoord=e*calculateRotationMatrix(anglez, angley, anglex)*[1;1;1];
-                                        Rotation=calculateRotationMatrix(anglexy, anglexz, angleyz);
-                                        circlecoords=multiplyandsum(r,Rotation,x_prime_z_prime_y_prime_coords,ecoord);
-                                        thiscircle=struct();
-                                        circlename = sprintf('c_r%d_e%d_xy%d_xz%d_yz%d_z%d_x%d_y%d', r_h, e_h, anglexy, anglexz, angleyz, anglez, anglex, angley);
-                                        fieldName = sprintf('xequation');
-                                        thiscircle.(fieldName)=circlecoords{1};
-                                        fieldName = sprintf('yequation');
-                                        thiscircle.(fieldName)=circlecoords{2};
-                                        fieldName = sprintf('zequation');
-                                        thiscircle.(fieldName)=circlecoords{3};
-                                        circlelist.(circlename) = thiscircle;
-                                    end
+    %il va falloir limitter les paramètres maximum de la génération de
+    %form en fonction du mouvement permi par le bras
+    %pas de 0.01 choisi dans premières boucles for experimentalement
+    %valeures de min et max eloignement aussi
+    %Valeures charac du robot
+    min_eloignement=0.02;
+    max_eloignement=0.28;
+    circlelist=struct();
+    x_prime_z_prime_y_prime_coords={@(t) cos(2*pi*t);@(t) sin(2*pi*t);@(t) 0};
+    for e_h=10:1:max_eloignement_centre*100                      %on itère sur les rayons possibles#changer incrémentation
+        e=e_h*0.01;
+        for r_h =1:1:max_rayon*100                             %on itère sur l'éloignement au centre possible #changer incrémentation?
+            r=r_h*0.01;
+            %condition d'appliquabilité à la simulation,trop forte
+            %vire des points qui marche mais peu de calculs
+            if (abs(e-r)<min_eloignement) || (e+r<min_eloignement) || (e+r>max_eloignement) || (abs(e-r)>max_eloignement)
+                continue
+            end
+            for anglexy=0:120:360                         %on explore les plans possibles en effectuant des rotations du plan xy autour de z
+                for anglexz=0:120:360                     %on explore les plans possibles en effectuant des rotations du plan xz autour de y
+                    for angleyz=0:120:360                 %on explore les plans possibles en effectuant des rotations du plan yz autour de x          
+                        for anglez=0:120:360              %on génère par incrément de 1 degré un "cercle" formé des centre des cercles que l'on va tracer à la distance voulue sur le plan z
+                            for anglex=0:120:360          %on génère par incrément de 1 degré un "cercle" formé des centre des cercles que l'on va tracer à la distance voulue sur le plan x
+                                for angley=0:120:360      %on génère par incrément de 1 degré un "cercle" formé des centre des cercles que l'on va tracer à la distance voulue sur le plan y
+                                    %coordonnées du centre du cercle
+                                    %tracé
+                                    ecoord=e*calculateRotationMatrix(anglez, angley, anglex)*[1;1;1];
+                                    Rotation=calculateRotationMatrix(anglexy, anglexz, angleyz);
+                                    circlecoords=multiplyandsum(r,Rotation,x_prime_z_prime_y_prime_coords,ecoord);
+                                    thiscircle=struct();
+                                    circlename = sprintf('c_r%d_e%d_xy%d_xz%d_yz%d_z%d_x%d_y%d', r_h, e_h, anglexy, anglexz, angleyz, anglez, anglex, angley);
+                                    fieldName = sprintf('xequation');
+                                    thiscircle.(fieldName)=circlecoords{1};
+                                    fieldName = sprintf('yequation');
+                                    thiscircle.(fieldName)=circlecoords{2};
+                                    fieldName = sprintf('zequation');
+                                    thiscircle.(fieldName)=circlecoords{3};
+                                    circlelist.(circlename) = thiscircle;
                                 end
                             end
                         end
@@ -726,8 +746,8 @@ function [circlelist] = CreateCircleList(max_rayon,max_eloignement_centre)
                 end
             end
         end
+    end
 end
-
 
 
 %function5
@@ -815,6 +835,7 @@ end
 %         end
 % end
 
+
 %function7
 function [interpolated_set] = createInterpolate(numberofinterpolatedshapes,len_time_series)
     %Interpolation set creation
@@ -868,6 +889,7 @@ function [interpolated_set] = createInterpolate(numberofinterpolatedshapes,len_t
         interpolated_set.(shapename) = thisshape;
     end
 end
+
 
 %function8
 function [circlelist] = CreateRandomCircleList(max_rayon, num_trajectories)
@@ -937,6 +959,7 @@ function [circlelist] = CreateRandomCircleList(max_rayon, num_trajectories)
     end
 end
 
+
 %function9
 function [linelist] = CreateRandomLineList(max_longueur, num_trajectories)
     max_eloignement_centre =max_longueur;
@@ -1004,6 +1027,7 @@ function [linelist] = CreateRandomLineList(max_longueur, num_trajectories)
     end
 end
 
+
 %function10
 function randomIntegers = generateRandomNumbers(a, b, p)
     % Generate p random integers in the interval [a, b]
@@ -1011,10 +1035,7 @@ function randomIntegers = generateRandomNumbers(a, b, p)
 end
 
 
-
-
-
-%function 11
+% function 11
 function [output_dataset] = five_motor_command_simulation(input_motor_commands,len_time_series,motorerrorselection,m1,m0,targets,model_name,mdl,base,follower,stationary_error,stationary_error_timestap,k,num_classes)
 %_______________
 %Creates a matrix that contains the wanted trajectory dataset with required
@@ -1025,367 +1046,453 @@ function [output_dataset] = five_motor_command_simulation(input_motor_commands,l
 %   input_motor_commands:cell containing motor command dataset ( for each trajetory: 5 motor commands, 1 for
 %   each motor)
 %_______________
-        output_dataset=[];
+    output_dataset=[];
+    
+    % Transform the scales of the motor positions.
+    % j1 = 180 + input_motor_commands{1};
+    % j2 = -input_motor_commands{2};
+    % j3 = input_motor_commands{3};
+    % j4 = -input_motor_commands{4};
+    % j5 = input_motor_commands{5};
+
+    j1 = input_motor_commands{1};
+    j2 = input_motor_commands{2};
+    j3 = input_motor_commands{3};
+    j4 = input_motor_commands{4};
+    j5 = input_motor_commands{5};
+    
+    end_time_value_in_seconds = (len_time_series-1)*0.01;
+    
+    joint1_ts = timeseries(j1/180*pi,0:0.01:end_time_value_in_seconds);
+    assignin('base','joint1_ts', joint1_ts)
+    joint2_ts = timeseries(j2/180*pi,0:0.01:end_time_value_in_seconds);
+    assignin('base','joint2_ts', joint2_ts)
+    joint3_ts = timeseries(j3/180*pi,0:0.01:end_time_value_in_seconds);
+    assignin('base','joint3_ts', joint3_ts)
+    joint4_ts = timeseries(j4/180*pi,0:0.01:end_time_value_in_seconds);
+    assignin('base','joint4_ts', joint4_ts)
+    joint5_ts = timeseries(j5/180*pi,0:0.01:end_time_value_in_seconds);
+    assignin('base','joint5_ts', joint5_ts)
+    
+    %Creating reset values to but things back to normal after error has
+    %been simulated
+    % Initialize placeholders for original data
+    placeholder1 = joint1_ts.Data;
+    placeholder2 = joint2_ts.Data;
+    placeholder3 = joint3_ts.Data;
+    placeholder4 = joint4_ts.Data;
+    placeholder5 = joint5_ts.Data;
+    
+    for j = motorerrorselection
+        disp('----------')
+        fprintf('Motor off is: %d\n', j);
+        fprintf('Progression is: %d\n', k);
+        disp('----------')
+    
+        % Reset errors to initial values
+        error1 = m1;
+        error2 = m1;
+        error3 = m1;
+        error4 = m1;
+        error5 = m1;
+        error6 = m1;
         
-        j1 = 180 + input_motor_commands{1};
-        j2 = -input_motor_commands{2};
-        j3 = input_motor_commands{3};
-        j4 = -input_motor_commands{4};
-        j5 = input_motor_commands{5};
+        % Assign base workspace variables
+        assignin('base', 'error1', error1)
+        assignin('base', 'error2', error2)
+        assignin('base', 'error3', error3)
+        assignin('base', 'error4', error4)
+        assignin('base', 'error5', error5)
+        assignin('base', 'error6', error6)
         
-        end_time_value_in_seconds= (len_time_series-1)*0.01;
+        % Reset joint data to original placeholders
+        joint1_ts.Data = placeholder1;
+        joint2_ts.Data = placeholder2;
+        joint3_ts.Data = placeholder3;
+        joint4_ts.Data = placeholder4;
+        joint5_ts.Data = placeholder5;
+        initial_data = {joint1_ts.Data, joint2_ts.Data, joint3_ts.Data, joint4_ts.Data, joint5_ts.Data};
     
-        joint1_ts = timeseries(j1/180*pi,0:0.01:end_time_value_in_seconds);
-        assignin('base','joint1_ts', joint1_ts)
-        joint2_ts = timeseries(j2/180*pi,0:0.01:end_time_value_in_seconds);
-        assignin('base','joint2_ts', joint2_ts)
-        joint3_ts = timeseries(j3/180*pi,0:0.01:end_time_value_in_seconds);
-        assignin('base','joint3_ts', joint3_ts)
-        joint4_ts = timeseries(j4/180*pi,0:0.01:end_time_value_in_seconds);
-        assignin('base','joint4_ts', joint4_ts)
-        joint5_ts = timeseries(j5/180*pi,0:0.01:end_time_value_in_seconds);
-        assignin('base','joint5_ts', joint5_ts)
-
-        %Creating reset values to but things back to normal after error has
-        %been simulated
-       % Initialize placeholders for original data
-placeholder1 = joint1_ts.Data;
-placeholder2 = joint2_ts.Data;
-placeholder3 = joint3_ts.Data;
-placeholder4 = joint4_ts.Data;
-placeholder5 = joint5_ts.Data;
-
-for j = motorerrorselection
-    disp('----------')
-    fprintf('Motor off is: %d\n', j);
-    fprintf('Progression is: %d\n', k);
-    disp('----------')
-
-    % Reset errors to initial values
-    error1 = m1;
-    error2 = m1;
-    error3 = m1;
-    error4 = m1;
-    error5 = m1;
-    error6 = m1;
+        assignin('base', 'joint1_ts', setfield(joint1_ts, 'Data', placeholder1));
+        assignin('base', 'joint2_ts', setfield(joint2_ts, 'Data', placeholder2));
+        assignin('base', 'joint3_ts', setfield(joint3_ts, 'Data', placeholder3));
+        assignin('base', 'joint4_ts', setfield(joint4_ts, 'Data', placeholder4));
+        assignin('base', 'joint5_ts', setfield(joint5_ts, 'Data', placeholder5));
     
-    % Assign base workspace variables
-    assignin('base', 'error1', error1)
-    assignin('base', 'error2', error2)
-    assignin('base', 'error3', error3)
-    assignin('base', 'error4', error4)
-    assignin('base', 'error5', error5)
-    assignin('base', 'error6', error6)
-    
-    % Reset joint data to original placeholders
-    joint1_ts.Data = placeholder1;
-    joint2_ts.Data = placeholder2;
-    joint3_ts.Data = placeholder3;
-    joint4_ts.Data = placeholder4;
-    joint5_ts.Data = placeholder5;
-    initial_data = {joint1_ts.Data, joint2_ts.Data, joint3_ts.Data, joint4_ts.Data, joint5_ts.Data};
-
-   assignin('base', 'joint1_ts', setfield(joint1_ts, 'Data', placeholder1));
-    assignin('base', 'joint2_ts', setfield(joint2_ts, 'Data', placeholder2));
-    assignin('base', 'joint3_ts', setfield(joint3_ts, 'Data', placeholder3));
-    assignin('base', 'joint4_ts', setfield(joint4_ts, 'Data', placeholder4));
-    assignin('base', 'joint5_ts', setfield(joint5_ts, 'Data', placeholder5));
-
-    % Apply errors or process points based on the current motor selection
-    switch j
-        case 0
-            error1 = m1;
-            assignin('base', 'error1', error1)
-        case 1
-            error1 = m0;
-            assignin('base', 'error1', error1)
-        case 2
-            error2 = m0;
-            assignin('base', 'error2', error2)
-        case 3  
-            error3 = m0;
-            assignin('base', 'error3', error3)
-        case 4  
-            error4 = m0;
-            assignin('base', 'error4', error4)
-        case 5  
-            error5 = m0;
-            assignin('base', 'error5', error5)
-        case 6
-            joint1_ts.Data = process_points(joint1_ts.Data);
-            assignin('base', 'joint1_ts', joint1_ts)
-        case 7
-            joint2_ts.Data = process_points(joint2_ts.Data);
-            assignin('base', 'joint2_ts', joint2_ts)
-        case 8
-            joint3_ts.Data = process_points(joint3_ts.Data);
-            assignin('base', 'joint3_ts', joint3_ts)
-        case 9
-            joint4_ts.Data = process_points(joint4_ts.Data);
-            assignin('base', 'joint4_ts', joint4_ts)
-        case 10
-            joint5_ts.Data = process_points(joint5_ts.Data);
-            assignin('base', 'joint5_ts', joint5_ts)
-    
-                case 11
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    
-                    joint1_ts.Data = extend_trajectory(joint1_ts.Data, rand());
-                    assignin('base','joint1_ts', joint1_ts)
-                case 12
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-
-                    joint2_ts.Data = extend_trajectory(joint2_ts.Data, rand());
-                    assignin('base','joint2_ts', joint2_ts)
-                case 13
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-
-                    joint3_ts.Data = extend_trajectory(joint3_ts.Data, rand());
-                    assignin('base','joint3_ts', joint3_ts)
-                case 14
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-
-                    joint4_ts.Data = extend_trajectory(joint4_ts.Data, rand());
-                    assignin('base','joint4_ts', joint4_ts)
-                case 15
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-
-                    joint5_ts.Data = extend_trajectory(joint5_ts.Data, rand());
-                    assignin('base','joint5_ts', joint5_ts)
-                case 16
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    % 
-                    joint1_ts.Data = process_points_capped_speed(joint1_ts.Data, speedcap, timescale);
-                    assignin('base','joint1_ts', joint1_ts)
-                case 17
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    % 
-                    joint2_ts.Data = process_points_capped_speed(joint2_ts.Data, speedcap, timescale);
-                    assignin('base','joint2_ts', joint2_ts)
-                case 18
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    % 
-                    joint3_ts.Data = process_points_capped_speed(joint3_ts.Data, speedcap, timescale);
-                    assignin('base','joint3_ts', joint3_ts)
-                case 19
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    % 
-                    joint4_ts.Data = process_points_capped_speed(joint4_ts.Data, speedcap, timescale);
-                    assignin('base','joint4_ts', joint4_ts)
-                case 20
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    % 
-                    joint5_ts.Data = process_points_capped_speed(joint5_ts.Data, speedcap, timescale);
-                    assignin('base','joint5_ts', joint5_ts)
-                case 21
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    % 
-                    joint1_ts.Data = process_points_stationary_error(joint1_ts.Data, stationary_error, stationary_error_timestap);
-                    assignin('base','joint1_ts', joint1_ts)
-                    
-                case 22
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    % 
-                    joint2_ts.Data = process_points_stationary_error(joint2_ts.Data, stationary_error, stationary_error_timestap);
-                    assignin('base','joint2_ts', joint2_ts)
-                case 23
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
+        % Apply errors or process points based on the current motor selection
+        switch j
+            case 0
+                error1 = m1;
+                assignin('base', 'error1', error1)
+            case 1
+                error1 = m0;
+                assignin('base', 'error1', error1)
+            case 2
+                error2 = m0;
+                assignin('base', 'error2', error2)
+            case 3  
+                error3 = m0;
+                assignin('base', 'error3', error3)
+            case 4  
+                error4 = m0;
+                assignin('base', 'error4', error4)
+            case 5  
+                error5 = m0;
+                assignin('base', 'error5', error5)
+            case 6
+                joint1_ts.Data = process_points(joint1_ts.Data);
+                assignin('base', 'joint1_ts', joint1_ts)
+            case 7
+                joint2_ts.Data = process_points(joint2_ts.Data);
+                assignin('base', 'joint2_ts', joint2_ts)
+            case 8
+                joint3_ts.Data = process_points(joint3_ts.Data);
+                assignin('base', 'joint3_ts', joint3_ts)
+            case 9
+                joint4_ts.Data = process_points(joint4_ts.Data);
+                assignin('base', 'joint4_ts', joint4_ts)
+            case 10
+                joint5_ts.Data = process_points(joint5_ts.Data);
+                assignin('base', 'joint5_ts', joint5_ts)
+        
+            case 11
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
                 
-                    joint3_ts.Data = process_points_stationary_error(joint3_ts.Data, stationary_error, stationary_error_timestap);
-                    assignin('base','joint3_ts', joint3_ts)
-                case 24
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
-                    % 
-                    joint4_ts.Data = process_points_stationary_error(joint4_ts.Data, stationary_error, stationary_error_timestap);
-                    assignin('base','joint4_ts', joint4_ts)
-                case 25
-                    % joint1_ts.Data = placeholder1;
-                    % joint2_ts.Data = placeholder2;
-                    % joint3_ts.Data = placeholder3;
-                    % joint4_ts.Data = placeholder4;
-                    % joint5_ts.Data = placeholder5;
+                joint1_ts.Data = extend_trajectory(joint1_ts.Data, rand());
+                assignin('base','joint1_ts', joint1_ts)
+            case 12
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+
+                joint2_ts.Data = extend_trajectory(joint2_ts.Data, rand());
+                assignin('base','joint2_ts', joint2_ts)
+            case 13
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+
+                joint3_ts.Data = extend_trajectory(joint3_ts.Data, rand());
+                assignin('base','joint3_ts', joint3_ts)
+            case 14
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+
+                joint4_ts.Data = extend_trajectory(joint4_ts.Data, rand());
+                assignin('base','joint4_ts', joint4_ts)
+            case 15
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+
+                joint5_ts.Data = extend_trajectory(joint5_ts.Data, rand());
+                assignin('base','joint5_ts', joint5_ts)
+            case 16
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+                % 
+                joint1_ts.Data = process_points_capped_speed(joint1_ts.Data, speedcap, timescale);
+                assignin('base','joint1_ts', joint1_ts)
+            case 17
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+                % 
+                joint2_ts.Data = process_points_capped_speed(joint2_ts.Data, speedcap, timescale);
+                assignin('base','joint2_ts', joint2_ts)
+            case 18
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+                % 
+                joint3_ts.Data = process_points_capped_speed(joint3_ts.Data, speedcap, timescale);
+                assignin('base','joint3_ts', joint3_ts)
+            case 19
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+                % 
+                joint4_ts.Data = process_points_capped_speed(joint4_ts.Data, speedcap, timescale);
+                assignin('base','joint4_ts', joint4_ts)
+            case 20
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+                % 
+                joint5_ts.Data = process_points_capped_speed(joint5_ts.Data, speedcap, timescale);
+                assignin('base','joint5_ts', joint5_ts)
+            case 21
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+                % 
+                joint1_ts.Data = process_points_stationary_error(joint1_ts.Data, stationary_error, stationary_error_timestap);
+                assignin('base','joint1_ts', joint1_ts)
                 
-                    joint5_ts.Data = process_points_stationary_error(joint5_ts.Data, stationary_error, stationary_error_timestap);
-                    assignin('base','joint5_ts', joint5_ts)
-            end
-            output_dataset = [output_dataset, targets];
-    
-            %on ajoute déjà les trajectoires cibles
-            disp("----------------")
-            disp("----------------")
-            w=warning('off','all');
-            simOut = sim(model_name);
-            warning(w);
-            assignin('base','simOut', simOut)
-            disp("----------------")
-            disp("----------------")
-    
-            j1o = simOut.j1.Data;
-            j2o = simOut.j2.Data;
-            j3o = simOut.j3.Data;
-            j4o = simOut.j4.Data;
-            j5o = simOut.j5.Data;
-            j1o = j1o*180/pi;
-            j2o = j2o*180/pi;
-            j3o = j3o*180/pi;
-            j4o = j4o*180/pi;
-            j5o = j5o*180/pi;
-
-    joint1_ts.Data = placeholder1;
-    joint2_ts.Data = placeholder2;
-    joint3_ts.Data = placeholder3;
-    joint4_ts.Data = placeholder4;
-    joint5_ts.Data = placeholder5;
-    disp(placeholder1)
-figure;
-
-% Plot for joint 1
-subplot(5, 1, 1); % 5 rows, 1 column, 1st plot
-plot(joint1_ts.Time, joint1_ts.Data);
-title('Joint 1');
-xlabel('Time');
-ylabel('Value');
-grid on;
-
-% Plot for joint 2
-subplot(5, 1, 2); % 5 rows, 1 column, 2nd plot
-plot(joint2_ts.Time, joint2_ts.Data);
-title('Joint 2');
-xlabel('Time');
-ylabel('Value');
-grid on;
-
-% Plot for joint 3
-subplot(5, 1, 3); % 5 rows, 1 column, 3rd plot
-plot(joint3_ts.Time, joint3_ts.Data);
-title('Joint 3');
-xlabel('Time');
-ylabel('Value');
-grid on;
-
-% Plot for joint 4
-subplot(5, 1, 4); % 5 rows, 1 column, 4th plot
-plot(joint4_ts.Time, joint4_ts.Data);
-title('Joint 4');
-xlabel('Time');
-ylabel('Value');
-grid on;
-
-% Plot for joint 5
-subplot(5, 1, 5); % 5 rows, 1 column, 5th plot
-plot(joint5_ts.Time, joint5_ts.Data);
-title('Joint 5');
-xlabel('Time');
-ylabel('Value');
-grid on;
-         
-simulated_data = {simOut.j1.Data, simOut.j2.Data, simOut.j3.Data, simOut.j4.Data, simOut.j5.Data};
-time = joint1_ts.Time; % Assuming all timeseries objects have the same time vector
-
-%Plot the trajectories before and after simulation
-for i = 2:2
-    % Reshape data to be a column vector
-    initial_data_i = reshape(initial_data{i}, [], 1);
-    simulated_data_i = reshape(simulated_data{i}, [], 1);
-
-    % Ensure time is a column vector
-    time = time(:);
-
-    % Create figure
-    figure;
-    hold on;
-
-    % Plot initial data
-    plot(time, initial_data_i, 'b-', 'DisplayName', 'Before Simulation');
-
-    % Plot simulated data
-    plot(time, simulated_data_i, 'r--', 'DisplayName', 'After Simulation');
-
-    % Labels and title
-    xlabel('Time');
-    ylabel(['Joint ', num2str(i), ' Position']);
-    title(['Joint ', num2str(i), ' Trajectories']);
-
-    % Show legend
-    legend('show');
-
-    hold off;
-end
-                    
-            [x, y, z] = ForwardKinematic(j1o, j2o, j3o, j4o, j5o,len_time_series,mdl,base,follower); 
-            figure;
-            % plot3(x_scaled, y_scaled, z, 'o-');
-            plot3(x, y, z, 'o-');
-            grid on;
-            % Scatter plot with color gradient based on point index
-            scatter3(x(1:10:end), y(1:10:end), z(1:10:end), 50, find(1:10:len_time_series), 'filled', 'MarkerEdgeColor', 'k');
-            xlabel('X-axis');
-            ylabel('Y-axis');
-            zlabel('Z-axis');
-            title('3D Plot Example, what should be done');
-
-
-             jdatapoint = [x, y, z];%pour un j donné on met à la suite les len_time_series prédit  et les réels en prenant en compte le défault moteur, c'est ce qu'on donnera à manger à l'IA;
-             output_dataset=[output_dataset,jdatapoint];
+            case 22
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+                % 
+                joint2_ts.Data = process_points_stationary_error(joint2_ts.Data, stationary_error, stationary_error_timestap);
+                assignin('base','joint2_ts', joint2_ts)
+            case 23
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
             
-        end 
+                joint3_ts.Data = process_points_stationary_error(joint3_ts.Data, stationary_error, stationary_error_timestap);
+                assignin('base','joint3_ts', joint3_ts)
+            case 24
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+                % 
+                joint4_ts.Data = process_points_stationary_error(joint4_ts.Data, stationary_error, stationary_error_timestap);
+                assignin('base','joint4_ts', joint4_ts)
+            case 25
+                % joint1_ts.Data = placeholder1;
+                % joint2_ts.Data = placeholder2;
+                % joint3_ts.Data = placeholder3;
+                % joint4_ts.Data = placeholder4;
+                % joint5_ts.Data = placeholder5;
+            
+                joint5_ts.Data = process_points_stationary_error(joint5_ts.Data, stationary_error, stationary_error_timestap);
+                assignin('base','joint5_ts', joint5_ts)
+        end
+
+        % Calculate the desired trajectory based on the control inputs
+        [x_c, y_c, z_c] = ForwardKinematic(j1, j2, j3, j4, j5,len_time_series,mdl,base,follower);        
+        % output_dataset = [output_dataset, targets];
+        output_dataset = [output_dataset, [x_c, y_c, z_c]];
+
+        %on ajoute déjà les trajectoires cibles
+        disp("----------------")
+        disp("----------------")
+        w=warning('off','all');
+        % Run simulation in the simulink model.
+        simOut = sim(model_name);
+        warning(w);
+        assignin('base','simOut', simOut)
+        disp("----------------")
+        disp("----------------")
+
+        % Get the response of each motor.    
+        j1o = simOut.j1.Data;
+        j2o = simOut.j2.Data;
+        j3o = simOut.j3.Data;
+        j4o = simOut.j4.Data;
+        j5o = simOut.j5.Data;
+        j1o = j1o*180/pi;
+        j2o = j2o*180/pi;
+        j3o = j3o*180/pi;
+        j4o = j4o*180/pi;
+        j5o = j5o*180/pi;
+
+        joint1_ts.Data = placeholder1;
+        joint2_ts.Data = placeholder2;
+        joint3_ts.Data = placeholder3;
+        joint4_ts.Data = placeholder4;
+        joint5_ts.Data = placeholder5;
+        
+        % disp(placeholder1)
+        f = figure;
+        f.Position = [10 10 900 600];
+
+        % Transform the scale of the command
+        j1_command = joint1_ts.Data*180/pi;
+        j2_command = joint2_ts.Data*180/pi;
+        j3_command = joint3_ts.Data*180/pi;
+        j4_command = joint4_ts.Data*180/pi;
+        j5_command = joint5_ts.Data*180/pi;
+        
+        % Plot for joint 1
+        subplot(5, 2, 1); % 5 rows, 1 column, 1st plot
+        plot(joint1_ts.Time, j1_command, 'r--');
+        hold on
+        plot(joint1_ts.Time, j1o, 'k-');
+        title('Joint 1');
+        xlabel('Time');
+        ylabel('Value');
+        grid on;
+
+        subplot(5, 2, 2); % 5 rows, 1 column, 1st plot
+        plot(joint1_ts.Time, j1o-j1_command, 'r-');
+        title('Joint 1');
+        xlabel('Time');
+        ylabel('Residual');
+        grid on;
+        
+        % Plot for joint 2
+        subplot(5, 2, 3); % 5 rows, 1 column, 2nd plot
+        plot(joint2_ts.Time, j2_command, 'r--');
+        hold on
+        plot(joint2_ts.Time, j2o, 'k-');
+        title('Joint 2');
+        xlabel('Time');
+        ylabel('Value');
+        grid on;
+
+        subplot(5, 2, 4); % 5 rows, 1 column, 1st plot
+        plot(joint1_ts.Time, j2o-j2_command, 'r-');
+        title('Joint 2');
+        xlabel('Time');
+        ylabel('Residual');
+        grid on;
+        
+        % Plot for joint 3
+        subplot(5, 2, 5); % 5 rows, 1 column, 3rd plot
+        plot(joint3_ts.Time, j3_command, 'r--');
+        hold on
+        plot(joint3_ts.Time, j3o, 'k-');
+        title('Joint 3');
+        xlabel('Time');
+        ylabel('Value');
+        grid on;
+
+        subplot(5, 2, 6); % 5 rows, 1 column, 1st plot
+        plot(joint1_ts.Time, j3o-j3_command, 'r-');
+        title('Joint 3');
+        xlabel('Time');
+        ylabel('Residual');
+        grid on;
+        
+        % Plot for joint 4
+        subplot(5, 2, 7); % 5 rows, 1 column, 4th plot
+        plot(joint4_ts.Time, j4_command, 'r--');
+        hold on
+        plot(joint4_ts.Time, j4o, 'k-');
+        title('Joint 4');
+        xlabel('Time');
+        ylabel('Value');
+        grid on;
+
+        subplot(5, 2, 8); % 5 rows, 1 column, 1st plot
+        plot(joint1_ts.Time, j4o-j4_command, 'r-');
+        title('Joint 4');
+        xlabel('Time');
+        ylabel('Residual');
+        grid on;
+        
+        % Plot for joint 5
+        subplot(5, 2, 9); % 5 rows, 1 column, 5th plot
+        plot(joint5_ts.Time, j5_command, 'r--');
+        hold on
+        plot(joint5_ts.Time, j5o, 'k-');
+        title('Joint 5');
+        xlabel('Time');
+        ylabel('Value');
+        grid on;
+
+        subplot(5, 2, 10); % 5 rows, 1 column, 1st plot
+        plot(joint1_ts.Time, j5o-j5_command, 'r-');
+        title('Joint 5');
+        xlabel('Time');
+        ylabel('Residual');
+        grid on;
+                 
+        simulated_data = {simOut.j1.Data, simOut.j2.Data, simOut.j3.Data, simOut.j4.Data, simOut.j5.Data};
+        time = joint1_ts.Time; % Assuming all timeseries objects have the same time vector
+        
+        % %Plot the trajectories before and after simulation
+        % for i = 2:2
+        %     % Reshape data to be a column vector
+        %     initial_data_i = reshape(initial_data{i}, [], 1);
+        %     simulated_data_i = reshape(simulated_data{i}, [], 1);
+        % 
+        %     % Ensure time is a column vector
+        %     time = time(:);
+        % 
+        %     % Create figure
+        %     figure;
+        %     hold on;
+        % 
+        %     % Plot initial data
+        %     plot(time, initial_data_i, 'b-', 'DisplayName', 'Command');
+        % 
+        %     % Plot simulated data
+        %     plot(time, simulated_data_i, 'r--', 'DisplayName', 'Response');
+        % 
+        %     % Labels and title
+        %     xlabel('Time');
+        %     ylabel(['Joint ', num2str(i), 'Position']);
+        %     title(['Joint ', num2str(i), ' Trajectories']);
+        % 
+        %     % Show legend
+        %     legend('show');
+        % 
+        %     hold off;
+        % end
+        
+        % Calculate the trajectory of the end-effecotr based on forward
+        % kinematics.
+        [x, y, z] = ForwardKinematic(j1o, j2o, j3o, j4o, j5o,len_time_series,mdl,base,follower);        
+        % Visualize the results.
+        f1 = figure;
+        f1.Position = [10 10 900 1200];
+        % plot3(x_scaled, y_scaled, z, 'o-');
+        % plot3(x, y, z, 'o-');
+        subplot(3, 1, 1)
+        grid on;
+        % Scatter plot with color gradient based on point index
+        scatter3(x(1:10:end), y(1:10:end), z(1:10:end), 50, find(1:10:len_time_series), 'filled', 'MarkerEdgeColor', 'k');
+        xlabel('X-axis');
+        ylabel('Y-axis');
+        zlabel('Z-axis');
+        title('Actual trajectory');
+
+        % Plot the desired trajectory:
+        subplot(3, 1, 2);
+        scatter3(x_c(1:10:end), y_c(1:10:end), z_c(1:10:end), 50, find(1:10:len_time_series), 'filled', 'MarkerEdgeColor', 'k');
+        xlabel('X-axis');
+        ylabel('Y-axis');
+        zlabel('Z-axis');
+        title('Desired trajectory');
+
+        subplot(3, 1, 3);
+        scatter3(targets(1:10:end, 1), targets(1:10:end, 2), targets(1:10:end, 3), 50, find(1:10:len_time_series), 'filled', 'MarkerEdgeColor', 'k');
+        xlabel('X-axis');
+        ylabel('Y-axis');
+        zlabel('Z-axis');
+        title('Original target');
+
+        jdatapoint = [x, y, z];%pour un j donné on met à la suite les len_time_series prédit  et les réels en prenant en compte le défault moteur, c'est ce qu'on donnera à manger à l'IA;
+        output_dataset=[output_dataset,jdatapoint];                
+    end 
 end
+
 
 %function 12
 function [x, y ,z] = ForwardKinematic(j1, j2, j3, j4, j5,len_time_series,mdl,base,follower)
@@ -1429,12 +1536,9 @@ function [x, y ,z] = ForwardKinematic(j1, j2, j3, j4, j5,len_time_series,mdl,bas
         
     end
     % fprintf('size_x is %d.\n',size(x));
-    % fprintf('size_targets is %d.\n',size([x, y ,z] ));
-    
-
-
-
+    % fprintf('size_targets is %d.\n',size([x, y ,z] ));  
 end
+
 
 function updated_j1 = process_points(j1)
     % Initialize pointsList
@@ -1708,8 +1812,7 @@ end
     generated_trajectories = 0;
 
     % Keep generating trajectories until the desired number is reached
- while generated_trajectories < number_of_pickup_trajctories
-        
+ while generated_trajectories < number_of_pickup_trajctories        
         % Increment the counter
         generated_trajectories = generated_trajectories + 1;
         
@@ -1722,13 +1825,15 @@ end
             if danger_zone == true
                 allowed_amplitude = {80,80,80,80,80};
             end
-            if i ==2
+            % if i ==2
+            %     [motor_command,triplets] = realisticsinglemotorcommand(max_number_of_motives,len_time_series,zero_amount, allowed_amplitude{i});
+            % else
+            %     [motor_command,triplets] = realisticsinglemotorcommandNOGENERATION(max_number_of_motives,len_time_series,zero_amount, allowed_amplitude{i});    
+            % end
+
             [motor_command,triplets] = realisticsinglemotorcommand(max_number_of_motives,len_time_series,zero_amount, allowed_amplitude{i});
-            else
-            [motor_command,triplets] = realisticsinglemotorcommandNOGENERATION(max_number_of_motives,len_time_series,zero_amount, allowed_amplitude{i});    
-            end
-            if i ==1
-                
+            
+            if i == 1                
                 if -50<triplets(1,1)<50
                     danger_zone = true;
                 end
@@ -1758,86 +1863,88 @@ function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_m
 
 % Point generation range (motor command amplitude)
 
-speed_cap = 2.7;
-
-% Random number of motives on the command of each motor
-% Note to self: maybe favorise appearance of 0 more often with better mechanism?
-
-% Initialising the points at 0
-motor_command = zeros(len_time_series, 1);
-
-% Choice of motor use or not
-percentage_zero_amount = zero_amount * 100;
-toggle_value = generateRandomNumbers(1, 100, 1);
-average_smallest_motive_length = len_time_series / max_number_of_motives;
-
-% Application of the toggle
-if toggle_value >= percentage_zero_amount
+    speed_cap = 2.7;
     
-    number_of_motives_in_traj = 5;
-    triplets = zeros(number_of_motives_in_traj, 3);
-
-    % Needs testing
-    remaining_points = len_time_series;
-    current_index = 0;
-    old_point = 0;
-    for i = 1:number_of_motives_in_traj
-        % The two durations (one time top arrive at the point associated with the
-        % motive and one for the plateau after attaining this point)
-        
-        % Inside motif arrival to plateau len rapport
-        arrival_to_plateau_proportion = randi([2, 8]) / 10;
+    % Random number of motives on the command of each motor
+    % Note to self: maybe favorise appearance of 0 more often with better mechanism?
     
-        % Motive length
-        motive_len = 200;
+    % Initialising the points at 0
+    motor_command = zeros(len_time_series, 1);
     
-        % Arrival to point length
-        arrival_to_point_length = round(motive_len * arrival_to_plateau_proportion);
-        triplets(i, 2) = arrival_to_point_length;
-        if i ~= 1
-            old_point = motor_command(current_index, 1);
-        end 
+    % Choice of motor use or not
+    percentage_zero_amount = zero_amount * 100;
+    toggle_value = generateRandomNumbers(1, 100, 1);
+    average_smallest_motive_length = len_time_series / max_number_of_motives;
+    
+    % Application of the toggle
+    if toggle_value >= percentage_zero_amount
         
-        % Plateau length
-        plateau_length = motive_len - arrival_to_point_length;
-        triplets(i, 3) = plateau_length;
-
-        % Randomly created next point
-        
-        if rand() < 0.6
-            point = rand() * allowed_amplitude;
-        else
+        number_of_motives_in_traj = 5;
+        triplets = zeros(number_of_motives_in_traj, 3);
+    
+        % Needs testing
+        remaining_points = len_time_series;
+        current_index = 0;
+        old_point = 0;
+        for i = 1:number_of_motives_in_traj
+            % The two durations (one time top arrive at the point associated with the
+            % motive and one for the plateau after attaining this point)
             
-            point =  - rand() * allowed_amplitude;
+            % Inside motif arrival to plateau len rapport
+            arrival_to_plateau_proportion = randi([2, 8]) / 10;
+        
+            % Motive length
+            motive_len = 200;
+        
+            % Arrival to point length
+            arrival_to_point_length = round(motive_len * arrival_to_plateau_proportion);
+            triplets(i, 2) = arrival_to_point_length;
+            if i ~= 1
+                old_point = motor_command(current_index, 1);
+            end 
+            
+            % Plateau length
+            plateau_length = motive_len - arrival_to_point_length;
+            triplets(i, 3) = plateau_length;
+    
+            % Randomly created next point
+            
+            if rand() < 0.6
+                point = rand() * allowed_amplitude;
+            else
+                
+                point =  - rand() * allowed_amplitude;
+            end
+            
+            % Enforce boundary conditions
+            min_point =  old_point - speed_cap * arrival_to_point_length;
+            max_point = old_point + speed_cap * arrival_to_point_length;
+            
+            % Adjust the point to respect speed constraint
+            if point < min_point
+                point = min_point;
+            elseif point > max_point
+                point = max_point;
+            end
+            
+            triplets(i, 1) = point;
+    
+            % Motor command updates
+            motor_command(current_index + 1:current_index + arrival_to_point_length, 1) = linspace(old_point, point, arrival_to_point_length);
+            motor_command(current_index + arrival_to_point_length + 1:current_index + motive_len, 1) = point;
+    
+            % Calculation of remaining points to be used 
+            remaining_points = remaining_points - motive_len;
+            current_index = len_time_series - remaining_points;
         end
-        
-        % Enforce boundary conditions
-        min_point =  old_point - speed_cap * arrival_to_point_length;
-        max_point = old_point + speed_cap * arrival_to_point_length;
-        
-        % Adjust the point to respect speed constraint
-        if point < min_point
-            point = min_point;
-        elseif point > max_point
-            point = max_point;
-        end
-        
-        triplets(i, 1) = point;
-
-        % Motor command updates
-        motor_command(current_index + 1:current_index + arrival_to_point_length, 1) = linspace(old_point, point, arrival_to_point_length);
-        motor_command(current_index + arrival_to_point_length + 1:current_index + motive_len, 1) = point;
-
-        % Calculation of remaining points to be used 
-        remaining_points = remaining_points - motive_len;
-        current_index = len_time_series - remaining_points;
+    else
+        triplets = [0, 0, 0];
+        motor_command(1) = 0.0001;
+        motor_command(1) = 0.0002;
     end
-else
-    triplets = [0, 0, 0];
-    motor_command(1) = 0.0001;
-    motor_command(1) = 0.0002;
 end
-end
+
+
 function [motor_command, triplets] = realisticsinglemotorcommandNOGENERATION(max_number_of_motives, len_time_series, zero_amount, allowed_amplitude)
 %_______________
 %Returns the keypoints that are representative of a pickup movement and the command for the trajectory, these
