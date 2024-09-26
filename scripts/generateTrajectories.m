@@ -13,7 +13,7 @@ function input_motor_commands = generateTrajectories(traj_type, n_traj, time_sta
 
     % Generate the trajectory.
     switch traj_type
-        case 'pick'
+        case 'random_move'
             zero_amount = 0;
             average_smallest_motive_lenght = 50;
             [trajectories, ~] = createRandomPickupList(n_traj, len_time_series, zero_amount, average_smallest_motive_lenght);
@@ -169,7 +169,7 @@ function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_m
             triplets(i, 3) = plateau_length;
     
             % Randomly created next point            
-            if rand() < 0.6
+            if rand() < 0.5
                 point = rand() * allowed_amplitude;
             else                
                 point =  - rand() * allowed_amplitude;
