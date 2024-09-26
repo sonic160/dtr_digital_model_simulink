@@ -237,5 +237,4 @@ function joint_cmd_transformed = transform_cmd_format(input_motor_cmd)
     % Create an time series object for the transformed command.
     joint_cmd_transformed = input_motor_cmd;
     joint_cmd_transformed.Data = (120 - joint_cmd*240/1000)/180*pi;
-
 end

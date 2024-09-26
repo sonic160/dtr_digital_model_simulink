@@ -19,17 +19,12 @@ end_time_value_in_seconds = (len_time_series-1)*simulation_time/len_time_series;
 % Get the time steps of the sequence.
 time_stamps = 0:0.01:end_time_value_in_seconds;
 
-% Let motor 1-5 to move from 500 to 1000 in 10 seconds, respectively.
-input_motor_commands = cell(5);
-for i = 1:5
-    if i == 1
-        input_motor_commands{i} = timeseries(linspace(500, 1000, len_time_series), time_stamps);
-    else
-        input_motor_commands{i} = timeseries(linspace(500, 600, len_time_series), time_stamps);
-    end
-end
+% Generate a random pick operation.
+traj_type = 'pick';
+n_traj = 1;
+input_motor_commands = generateTrajectories(traj_type, n_traj, time_stamps);
 
-failure_type = 1;
+failure_type = 2; % No failure
 visualization = 1;
 [joint_cmds, joint_resps, traj_cmd, traj_resp] = run_simulation(input_motor_commands, failure_type, mdl_name, visualization);
 
