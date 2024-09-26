@@ -24,11 +24,9 @@ function input_motor_commands = generateTrajectories(traj_type, n_traj, time_sta
     % Prepare the desired control signals as a timeseries.
     input_motor_commands = cell(1, n_traj);
     for i = 1:n_traj
-        tmp = cell(1, 5);
         for j = 1:5
-            tmp{j} = inverse_transform_cmd_format(timeseries(trajectories{i}{j}, time_stamps));
+            input_motor_commands{i} = inverse_transform_cmd_format(timeseries(trajectories{i}{j}, time_stamps));
         end
-        input_motor_commands{i} = tmp;
     end
 end
 
