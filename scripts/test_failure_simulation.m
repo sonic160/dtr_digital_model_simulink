@@ -24,7 +24,7 @@ traj_type = 'pick';
 n_traj = 1;
 input_motor_commands = generateTrajectories(traj_type, n_traj, time_stamps);
 
-failure_type = 2; % No failure
+failure_type = 0; % No failure
 visualization = 1;
 [joint_cmds, joint_resps, traj_cmd, traj_resp] = run_simulation(input_motor_commands, failure_type, mdl_name, visualization);
 

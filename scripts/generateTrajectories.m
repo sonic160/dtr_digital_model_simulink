@@ -63,12 +63,7 @@ function [trajectories, csv_file_equivalent] = createRandomPickupList(number_of_
     if len_time_series<average_smallest_motive_lenght
         error('Condition not met: len_time_series<average_smallest_motive_lenght, either reduce number of points for minimal motive or make the trajectory longer'); % Raise an error
     end
-
-    %Interpolation set creation
-    pickup_set = struct();
-    min_eloignement_point = 0.02;
-    max_eloignement_point = 0.28;
-    
+  
     max_number_of_motives = len_time_series/average_smallest_motive_lenght;
     
     % Initialize a cell array to store the trajectories
@@ -129,7 +124,9 @@ function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_m
     %_______________
     
     % Point generation range (motor command amplitude)
-    speed_cap = 2.7;
+    % From datasheet, the rotation speed of the motors is 272 degrees per
+    % seconds, so 0.272 degree per ms.
+    speed_cap = 0.272;
     
     % Random number of motives on the command of each motor
     % Note to self: maybe favorise appearance of 0 more often with better mechanism?
@@ -140,11 +137,9 @@ function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_m
     % Choice of motor use or not
     percentage_zero_amount = zero_amount * 100;
     toggle_value = generateRandomNumbers(1, 100, 1);
-    average_smallest_motive_length = len_time_series / max_number_of_motives;
     
     % Application of the toggle
-    if toggle_value >= percentage_zero_amount
-        
+    if toggle_value >= percentage_zero_amount        
         number_of_motives_in_traj = 5;
         triplets = zeros(number_of_motives_in_traj, 3);
     
@@ -176,8 +171,7 @@ function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_m
             % Randomly created next point            
             if rand() < 0.6
                 point = rand() * allowed_amplitude;
-            else
-                
+            else                
                 point =  - rand() * allowed_amplitude;
             end
             
