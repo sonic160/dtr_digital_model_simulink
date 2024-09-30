@@ -21,21 +21,27 @@ end_time_value_in_seconds = (len_time_series-1)*simulation_time/len_time_series;
 % Get the time steps of the sequence.
 time_stamps = 0:0.01:end_time_value_in_seconds;
 
+root_dir = 'RobotPdMDataset_1/';
+
 % Define the simulaion set-up.
 traj_type_list = {'random_move'}; % How many trajectory types to consider.
-label_list = {'Healthy', 'Motor_1_Stuck', 'Motor_2_Stuck', 'Motor_3_Stuck', 'Motor_4_Stuck', 'Motor_5_Stuck'}; % Define the labels to be simulated.
+% label_list = {'Healthy', 'Motor_1_Stuck', 'Motor_2_Stuck', 'Motor_3_Stuck', 'Motor_4_Stuck', 'Motor_5_Stuck'}; % Define the labels to be simulated.
+% failure_type_list = 0:4;
+label_list = {'Motor_1_Steady_state_error', 'Motor_2_Steady_state_error', 'Motor_3_Steady_state_error', ...
+    'Motor_4_Steady_state_error'}; % Define the labels to be simulated.
+failure_type_list = 5:8;
+
 n_label = length(label_list); % Get the number of labels.
+
 n_traj_per_label = 400; % Define the number of trajectory simulated per label.
 visualization = 0; % Turn off the visualization.
-
-root_dir = 'RobotPdMDataset/';
 
 % Start simulation loop.
 % Loop over each class. Creat a subfolder per class.
 for i = 1:n_label 
     % Retrive the label.
     label = label_list{i};
-    failure_type = i-1; % Index for the class.
+    failure_type = failure_type_list(i); % Index for the class.
 
     % Check if the subfolder exists
     sub_folder = [root_dir label];

@@ -14,15 +14,22 @@ function [joint_cmds, joint_resps, traj_cmd, traj_resp] = run_simulation(input_m
     % Depending on the value of failure_type, direct to the corresponding
     % subfunction.
 
-    switch failure_type
-        case 0
-            [joint_cmds, joint_resps] = simulation_normal(input_motor_commands, mdl_name, visualization);
-        otherwise
-            if failure_type>0 && failure_type<6 % Motor stuck failure.
-                failded_motor_idx = failure_type;
-                [joint_cmds, joint_resps] = simulation_motor_stuck(input_motor_commands, failded_motor_idx, mdl_name, visualization);
-            end        
+    % Choose different simulation function based on the value of failure_type. 
+    if failure_type==0 % No failure.
+        [joint_cmds, joint_resps] = simulation_normal(input_motor_commands, mdl_name, visualization);
     end
+
+    if failure_type>0 && failure_type<5 % Motor stuck failure.
+        failded_motor_idx = failure_type;
+        [joint_cmds, joint_resps] = simulate_motor_stuck(input_motor_commands, failded_motor_idx, mdl_name, visualization);
+    end
+
+    if failure_type>4 && failure_type<9 % Steady-state error.
+        failded_motor_idx = failure_type - 4;
+        [joint_cmds, joint_resps] = simulate_steady_state_error(input_motor_commands, failded_motor_idx, mdl_name, visualization);
+    end
+
+
     
     % Apply the virtual sensor to measure the 3d coordinates.
     % For the command.
@@ -111,7 +118,79 @@ function coordinates = virtual_sensor(motor_positions)
 end
 
 
-function [joint_cmds, joint_resps] = simulation_motor_stuck(input_motor_commands, failded_motor_idx, mdl_name, visualization)
+function [joint_cmds, joint_resps] = simulate_steady_state_error(input_motor_commands, failded_motor_idx, mdl_name, visualization)
+    % This function runs a single simulation of the robot trajectory when one
+    % motor have steady-state error.
+    % Inputs: 
+    % - input_motor_commands: A cell array of 1*5. Each element is a timeseries
+    % object of the control command on motors 1-5, respectively. Each motor
+    % command takes values in [0, 1000], which will be translated to [0, 240]
+    % degrees in this function respectively.
+    % - failed_motor_idx: Index of the stucked motor.
+    % Returns:
+    % - j1_resp - j5_resp: Timeseries objects that represents the responses
+    % from the motors.
+    
+    % Define the upper and lower limits of the error.
+    error_ll = 5; % In units of the robot.
+    error_ul = 20; % In units of the robot.
+
+    % Generate the failed control signals.
+    joint_cmds = cell(1, numel(input_motor_commands));
+    for i = 1:numel(input_motor_commands)
+        % Log the original commands.
+        joint_cmd = transform_cmd_format(input_motor_commands{i});
+        joint_cmds{i} = joint_cmd;
+    end
+
+    % Change the commands by injecting failure.
+    input_motor_commands{failded_motor_idx} = inject_stationary_error(input_motor_commands{failded_motor_idx}, error_ll, error_ul);
+
+    % Run a normal simulation and get the outputs.
+    [~, joint_resps] = simulation_normal(input_motor_commands, mdl_name, 0);
+       
+    % Visualize the data if asked.
+    if visualization
+        visualize_simulation_results(joint_cmds, joint_resps);
+    end
+end
+
+
+function j1 = inject_stationary_error(j1, error_ll, error_ul)
+    % This function inject a steady-state error.
+    % Input: j1: A timeseries of the original control sequence. Note:
+    % Unitless, in [0, 1000].
+    % Return: update_j1.
+
+    % Get the control sequence from the input of timeserires.
+    control_commands = j1.Data;
+    
+    % Define the length of each block
+    blockSize = 200;    
+    % Number of blocks
+    numBlocks = length(control_commands) / blockSize;    
+    
+    % Generate the random error.
+    errors = error_ll + (error_ul - error_ll) * rand(1, numBlocks);
+    % Iterate through the blocks to be updated and apply the error
+    for i = 1:numBlocks
+        error = errors(i);
+        if rand() < .5 % 50% change having negative error.
+            error = -1*error;
+        end
+
+        % Update the control command.
+        start_index = (i-1)*blockSize + 1;
+        end_index = i*blockSize;
+        control_commands(start_index:end_index) = control_commands(start_index:end_index) + error;
+    end
+    
+    % Return the updated j1
+    j1.Data = control_commands;
+end
+
+
+function [joint_cmds, joint_resps] = simulate_motor_stuck(input_motor_commands, failded_motor_idx, mdl_name, visualization)
     % This function runs a single simulation of the robot trajectory when one
     % motor get stuck.
     % Inputs: 
@@ -141,7 +220,6 @@ function [joint_cmds, joint_resps] = simulation_motor_stuck(input_motor_commands
     if visualization
         visualize_simulation_results(joint_cmds, joint_resps);
     end
-
 end
 
 
