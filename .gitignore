@@ -2,3 +2,6 @@
 RobotPdMDataset/
 *.mat
 from_killian/
+**/original_failure_simulation_data
+**/RobotPdMDataset_Testing/
+**/Real_test_data/
