@@ -21,15 +21,13 @@ end_time_value_in_seconds = (len_time_series-1)*simulation_time/len_time_series;
 % Get the time steps of the sequence.
 time_stamps = 0:0.01:end_time_value_in_seconds;
 
-root_dir = 'RobotPdMDataset_1/';
+root_dir = 'RobotPdMDataset/';
 
 % Define the simulaion set-up.
 traj_type_list = {'random_move'}; % How many trajectory types to consider.
-% label_list = {'Healthy', 'Motor_1_Stuck', 'Motor_2_Stuck', 'Motor_3_Stuck', 'Motor_4_Stuck', 'Motor_5_Stuck'}; % Define the labels to be simulated.
-% failure_type_list = 0:4;
-label_list = {'Motor_1_Steady_state_error', 'Motor_2_Steady_state_error', 'Motor_3_Steady_state_error', ...
-    'Motor_4_Steady_state_error'}; % Define the labels to be simulated.
-failure_type_list = 5:8;
+label_list = {'Healthy', 'Motor_1_Stuck', 'Motor_2_Stuck', 'Motor_3_Stuck', 'Motor_4_Stuck', ...
+    'Motor_1_Steady_state_error', 'Motor_2_Steady_state_error', 'Motor_3_Steady_state_error', 'Motor_4_Steady_state_error'}; % Define the labels to be simulated.
+failure_type_list = 0:8;
 
 n_label = length(label_list); % Get the number of labels.
 
