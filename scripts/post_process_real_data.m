@@ -12,7 +12,7 @@ n_runs = 10; % Number of runs in the tests of one label that needs extraction.
 sequence_time = 10; % Each sequnce is 10 seconds.
 
 % Get all the subfolders in the orginal dataset.
-base_dict = 'original_failure_simulation_data\robot_b\';
+base_dict = 'collection\';
 % Get the list of all files and folders in the directory
 all_items = dir(base_dict);
 % Filter out the items that are not directories
@@ -21,7 +21,7 @@ subfolders = all_items([all_items.isdir]);
 subfolders = subfolders(~ismember({subfolders.name}, {'.', '..'}));
 
 % Do a loop to extract all the dataset.
-output_path_base = 'Real_test_data'; % Save to this folder.
+output_path_base = 'Real_test_data_1'; % Save to this folder.
 for i = 1:length(subfolders)
     fprintf('Extract tests for %d/%d labels\n', i, length(subfolders));
 
