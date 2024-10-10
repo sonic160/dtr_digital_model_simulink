@@ -87,11 +87,11 @@ function [trajectories, csv_file_equivalent] = createRandomPickupList(number_of_
         triplets_cell = cell(1, 5);
 
         %Iterating over each of the 5 motors to create one trajectory
-        allowed_amplitude = {80,80,80,80,80};
+        allowed_amplitude = {80,50,50,50,50};
         danger_zone = false;
-        for i = 1:5
+        for i = 1:4
             if danger_zone == true
-                allowed_amplitude = {80,80,80,80,80};
+                allowed_amplitude = {80,50,50,50,50};
             end
             % if i ==2
             %     [motor_command,triplets] = realisticsinglemotorcommand(max_number_of_motives,len_time_series,zero_amount, allowed_amplitude{i});
@@ -109,6 +109,14 @@ function [trajectories, csv_file_equivalent] = createRandomPickupList(number_of_
             trajectory{i} = motor_command;
             triplets_cell{i} = triplets;
         end
+
+        % Keep the 5th motor in its initial position, as it does not
+        % impacts the end-effector.
+        trajectory{5} = zeros(len_time_series, 1);
+        number_of_motives_in_traj = 5;
+        triplets = zeros(number_of_motives_in_traj, 3);
+        triplets(:, 2:3) = 100*ones(number_of_motives_in_traj, 2);
+        triplets_cell{5} = triplets;
     
         trajectories{generated_trajectories} = trajectory;
         csv_file_equivalent{generated_trajectories} = triplets_cell;       
@@ -129,8 +137,8 @@ function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_m
     
     % Point generation range (motor command amplitude)
     % From datasheet, the rotation speed of the motors is 272 degrees per
-    % seconds, so 0.272 degree per ms.
-    speed_cap = 0.272;
+    % seconds, so 0.272 degree per ms, 2.72 per 10 ms.
+    speed_cap = 2.72;
     
     % Random number of motives on the command of each motor
     % Note to self: maybe favorise appearance of 0 more often with better mechanism?
@@ -156,7 +164,7 @@ function [motor_command, triplets] = realisticsinglemotorcommand(max_number_of_m
             % motive and one for the plateau after attaining this point)
             
             % Inside motif arrival to plateau len rapport
-            arrival_to_plateau_proportion = randi([2, 8]) / 10;
+            arrival_to_plateau_proportion = randi([3, 5]) / 10;
         
             % Motive length
             motive_len = 200;
