@@ -9,3 +9,6 @@ from_killian/
 *.slxc
 collection/
 Real_test_data_1/
+scripts_oop/training_dataset/
+scripts_oop/invesigation/
+scripts_oop/testing_dataset/
