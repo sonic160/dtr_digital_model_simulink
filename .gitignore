@@ -6,9 +6,9 @@ from_killian/
 **/RobotPdMDataset_Testing/
 **/Real_test_data/
 **/slprj/
-*.slxc
+**.slxc
 collection/
 Real_test_data_1/
-scripts_oop/training_dataset/
-scripts_oop/invesigation/
-scripts_oop/testing_dataset/
+**/training_dataset/
+**/invesigation/
+**/testing_dataset/
