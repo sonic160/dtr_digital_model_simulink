@@ -54,7 +54,11 @@ classdef DataLoader < RobotSimulator
                 disp(['Loaded data from ' self.pathLoggedData]);
             else
                 % If the file does not exist, run read_original_data
-                [dataTables, y] = self.readOriginalData();
+                try
+                    [dataTables, y] = self.readOriginalData();
+                catch
+                    [dataTables, y] = self.readOriginalDataOldVersion();
+                end
                 
                 % Save X and y as 'conc_dataset.mat' under '../RobotPdMDataset'
                 save(self.pathLoggedData, 'dataTables', 'y');
@@ -130,6 +134,97 @@ classdef DataLoader < RobotSimulator
                 startIdx = startIdx + length(matFiles);
             end
         end
+
+        
+        function [dataTables, y] = readOriginalDataOldVersion(self)
+        % This function reads the original data under path mainFolder. 
+        % It will return a dataTables that contain all the features, and a
+        % cellarray y that contails the name of the labels.
+        
+            % Get the list of all subfolders
+            subFolders = dir(self.pathDataset);
+            subFolders = subFolders([subFolders.isdir]);  % Filter only directories
+            subFolders = subFolders(~ismember({subFolders.name}, {'.', '..'})); % Remove '.' and '..'
+            
+            % Count how many dataset we have.
+            n_dataset = 0;
+            for i = 1:length(subFolders)
+                % Locate the sub dictionary.
+                folderPath = fullfile(self.pathDataset, subFolders(i).name);    
+                % Get a list of all .mat files in the subfolder that start with 'dataset_'
+                matFiles = dir(fullfile(folderPath, 'dataset_*.mat'));
+                for j = 1:length(matFiles)
+                    n_dataset = n_dataset + 1;
+                end
+            end
+            
+            % Initialize cell array for data and cell array for labels
+            dataTables = cell(1, n_dataset);
+            y = cell(1, n_dataset);
+            
+            % Iterate over each subfolder to retrieve the data.
+            startIdx = 0;
+            for i = 1:length(subFolders)
+                % Locate the sub dictionary.
+                folderPath = fullfile(self.pathDataset, subFolders(i).name);    
+                % Get a list of all .mat files in the subfolder that start with 'data_'
+                matFiles = dir(fullfile(folderPath, 'dataset_*.mat'));
+                hiddenDatasetFiles = dir(fullfile(folderPath, 'hidden_dataset_*.mat'));
+                
+                % Loop through each valid .mat file                
+                for j = 1:length(matFiles)
+                    matFilePath = fullfile(folderPath, matFiles(j).name);
+                    hiddenDatasetPath = fullfile(folderPath, hiddenDatasetFiles(j).name);
+
+                    % Extract the number between '_' and '.mat'
+                    numberStr = regexp(matFilePath, '(?<=_)\d+(?=\.mat)', 'match');
+                    % Convert the extracted string to a number (optional)
+                    idxOffset = str2double(numberStr{1});
+                    idx = startIdx+idxOffset;
+                    
+                    % Load the .mat file
+                    loadedData = load(matFilePath);
+                    dataset = loadedData.dataset;
+                    
+                    hidden_dataset = load(hiddenDatasetPath);
+                    hidden_dataset = hidden_dataset.hidden_dataset;
+
+                    motorCmdsRadius = hidden_dataset{1};
+                    trajCmds = dataset(:, 1:3);
+                    trajResps = dataset(:, 4:6);
+                    
+                    % Prepare the data values.
+                    dataMatrix = zeros(size(trajCmds, 1), 12);
+                    % Set timestamps.
+                    dataMatrix(:, 1) = self.simulationTimeStamps;
+                    % Set the motor commands.
+                    for k = 1:5
+                        dataMatrix(:, k+1) = motorCmdsRadius{k}.Data;
+                    end
+                    % Set the desired traj.
+                    dataMatrix(:, 7:9) = trajCmds;
+                    % Set the obtained traj.
+                    dataMatrix(:, 10:12) = trajResps;
+        
+                    % Create a dataTable
+                    colNames = {'Timestamps', 'Motor1Cmd', 'Motor2Cmd', 'Motor3Cmd', 'Motor4Cmd', 'Motor5Cmd', ...
+                        'DesiredTrajectory-x', 'DesiredTrajectory-y', 'DesiredTrajectory-z', ...
+                        'RealizedTrajectory-x', 'RealizedTrajectory-y', 'RealizedTrajectory-z'};
+                    dataTable = array2table(dataMatrix, 'VariableNames', colNames);
+                    dataTable.matFilePath = repmat({matFilePath}, height(dataTable), 1);
+
+                                        
+                    % Append the loaded data to the cell array X
+                    dataTables{idx} = dataTable;
+                    
+                    % Append the subfolder name as the label to y
+                    y{idx} = subFolders(i).name;
+                end
+                startIdx = startIdx + length(matFiles);
+            end
+        end
+
+
 
         function dataTable = createDataTable(~, matFilePath)
         % Read a single .mat file and create a dataTable.
