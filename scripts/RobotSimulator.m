@@ -302,6 +302,8 @@ methods
     % This function adds a random noise to the control commands to simulate
     % the position errors.
 
+        holdingTimeIdx = 5;
+
         modifiedMotorCmds = motorCmds;
 
         % Define the length of each block
@@ -314,10 +316,33 @@ methods
             numBlocks = floor(length(cmdValues) / blockSize);
             error = randsample(self.errorValues, numBlocks, true, self.errorProb);
             for j = 1:numBlocks                
-                % Update the control command.
-                start_index = (i-1)*blockSize + 1;
-                end_index = i*blockSize;
-                cmdValues(start_index:end_index) = cmdValues(start_index:end_index) + error(j);
+                % Update the control command.              
+                start_index = (j-1)*blockSize + 1;
+                end_index = j*blockSize;
+                cmdValuesBlock = cmdValues(start_index:end_index);
+
+                % Add holdingTimeIdx of delay.
+                if start_index==1
+                    startValue = cmdValuesBlock(1);
+                else
+                    startValue = cmdValues(start_index-1);
+                end
+
+                % Get the plateau starting index and the target value.
+                cmdDiff = cmdValuesBlock(2:end) - cmdValuesBlock(1:end-1);
+                idxNonZero = find(cmdDiff, 1, "first");
+                cmdDiff(1:idxNonZero-1) = -1;
+                idxPlateau = find(cmdDiff, 1, "last"); % Last non zero element.
+                targetValue = cmdValuesBlock(idxPlateau+1)+error(j);
+
+                if idxPlateau
+                    cmdValuesBlock(1:holdingTimeIdx-1) = startValue;
+                    cmdValuesBlock(holdingTimeIdx:idxPlateau+1) = linspace(startValue, targetValue, idxPlateau-holdingTimeIdx+2);
+                    cmdValuesBlock(idxPlateau+2:end) = targetValue;
+                end
+
+                cmdValues(start_index:end_index) = cmdValuesBlock;
+                % cmdValues(start_index:end_index) = cmdValues(start_index:end_index) + error(j);
             end
             motorCmd.Data = cmdValues;
             modifiedMotorCmds{i} = motorCmd;

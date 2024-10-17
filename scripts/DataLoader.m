@@ -16,6 +16,7 @@ classdef DataLoader < RobotSimulator
         labelList = {'Healthy', ...
                 'Motor_1_Stuck', 'Motor_2_Stuck', 'Motor_3_Stuck', 'Motor_4_Stuck', ...
                 'Motor_1_Steady_state_error', 'Motor_2_Steady_state_error', 'Motor_3_Steady_state_error', 'Motor_4_Steady_state_error'};
+        saveFigsInterval = 100;
     end
 
     methods
@@ -59,6 +60,7 @@ classdef DataLoader < RobotSimulator
                 catch
                     [dataTables, y] = self.readOriginalDataOldVersion();
                 end
+                % [dataTables, y] = self.readOriginalData();
                 
                 % Save X and y as 'conc_dataset.mat' under '../RobotPdMDataset'
                 save(self.pathLoggedData, 'dataTables', 'y');
@@ -108,6 +110,8 @@ classdef DataLoader < RobotSimulator
             % Iterate over each subfolder to retrieve the data.
             startIdx = 0;
             for i = 1:length(subFolders)
+                fprintf('Extract the %d/%d labels.\n', i, length(subFolders));
+
                 % Locate the sub dictionary.
                 folderPath = fullfile(self.pathDataset, subFolders(i).name);    
                 % Get a list of all .mat files in the subfolder that start with 'data_'
@@ -123,11 +127,14 @@ classdef DataLoader < RobotSimulator
                     idxOffset = str2double(numberStr{1});
                     idx = startIdx+idxOffset;
                     
-                    dataTable = self.createDataTable(matFilePath);                   
+                    if mod(idxOffset, self.saveFigsInterval)==0
+                        dataTable = self.createDataTable(matFilePath, idxOffset);
+                    else
+                        dataTable = self.createDataTable(matFilePath);
+                    end
                                         
                     % Append the loaded data to the cell array X
-                    dataTables{idx} = dataTable;
-                    
+                    dataTables{idx} = dataTable;                    
                     % Append the subfolder name as the label to y
                     y{idx} = subFolders(i).name;
                 end
@@ -226,14 +233,20 @@ classdef DataLoader < RobotSimulator
 
 
 
-        function dataTable = createDataTable(~, matFilePath)
+        function dataTable = createDataTable(self, matFilePath, datasetIdxSaveFigs)
         % Read a single .mat file and create a dataTable.
         % The dataTable has 12 columns:
         % - timestamps
         % - control commands for each motor (2-6)
         % - trajectory command (7-9)
         % - trajectory response (10-12)
-            
+
+            % Assign default value for datasetIdxSaveFigs: 0.
+            % 0 means do not save Figs.
+            if nargin == 2
+                datasetIdxSaveFigs = 0;
+            end
+
             % Load the .mat file
             loadedData = load(matFilePath);
             motorCmdsRadius = loadedData.motorCmdsRadius;
@@ -259,6 +272,20 @@ classdef DataLoader < RobotSimulator
                 'RealizedTrajectory-x', 'RealizedTrajectory-y', 'RealizedTrajectory-z'};
             dataTable = array2table(dataMatrix, 'VariableNames', colNames);
             dataTable.matFilePath = repmat({matFilePath}, height(dataTable), 1);
+
+            % Save Figs.
+            if datasetIdxSaveFigs>0
+                % Get the path of the current dict.
+                [rootPath, ~, ~] = fileparts(matFilePath);
+
+                % Read the hiddendataset to get motor responses.
+                hiddendatasetPath = [rootPath '/hidden_dataset_' num2str(datasetIdxSaveFigs) '.mat'];
+                loadedData = load(hiddendatasetPath);
+                motorRespsRadius = loadedData.motorRespsRadius;
+
+                % Save the Figs.
+                self.saveVisualizationFigs(motorCmdsRadius, motorRespsRadius, trajCmds, trajResps, rootPath, datasetIdxSaveFigs);
+            end
         end
 
 
@@ -381,8 +408,8 @@ classdef DataLoader < RobotSimulator
                 save(filePath, 'trajCmds', 'trajResps', 'motorCmdsRadius');    
                 % Log also the command and response on the component level.
                 save(fullfile(outputpath, ['hidden_dataset_' num2str(i)]), 'motorRespsRadius');
-                % Save the Figures.
-                self.saveVisualizationFigs(motorCmdsRadius, motorRespsRadius, trajCmds, trajResps, outputpath, i);
+                % % Save the Figures.
+                % self.saveVisualizationFigs(motorCmdsRadius, motorRespsRadius, trajCmds, trajResps, outputpath, i);
             end
         
         end
