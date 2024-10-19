@@ -40,6 +40,7 @@ properties
     errorValues = [0, 0]; % The possible errors on the positions.
     errorProb = [.5, .5];
     errorBlockSize = 200; % The error changes every x points.
+    holdingTimeIdx = 2;
 
     % Parameters for the stuck failure.
     stuckInstantIdx = 50; % The moment when stuck failure occurs.
@@ -302,7 +303,10 @@ methods
     % This function adds a random noise to the control commands to simulate
     % the position errors.
 
-        holdingTimeIdx = 5;
+        % The minimal value of holdingTimeIdx should be 2.
+        if self.holdingTimeIdx < 2
+            self.holdingTimeIdx = 2;
+        end
 
         modifiedMotorCmds = motorCmds;
 
@@ -336,8 +340,8 @@ methods
                 targetValue = cmdValuesBlock(idxPlateau+1)+error(j);
 
                 if idxPlateau
-                    cmdValuesBlock(1:holdingTimeIdx-1) = startValue;
-                    cmdValuesBlock(holdingTimeIdx:idxPlateau+1) = linspace(startValue, targetValue, idxPlateau-holdingTimeIdx+2);
+                    cmdValuesBlock(1:self.holdingTimeIdx-1) = startValue;
+                    cmdValuesBlock(self.holdingTimeIdx:idxPlateau+1) = linspace(startValue, targetValue, idxPlateau-self.holdingTimeIdx+2);
                     cmdValuesBlock(idxPlateau+2:end) = targetValue;
                 end
 
