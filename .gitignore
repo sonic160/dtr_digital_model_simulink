@@ -6,3 +6,4 @@ from_killian/
 dataset/
 simulateRealTraj/
 scripts_archived/
+**/**.pptx
