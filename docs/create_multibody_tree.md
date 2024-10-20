@@ -24,7 +24,7 @@ You will see the robot move competely randomly. This is because we do not give a
 
 In [`digital_model_kinematics\armpi_fpv_step_2_ideally_controlled.slx`](../digital_model_kinematics/armpi_fpv_step_2_ideally_controlled.slx), we add some simple controls to the robot. All the motors are fixed and only the gripper is commanded to move. It can be seen that the robot follows the command, although the gripper penetrates into itself. This is because we do not add physical constraints yet.
 
-<video src="figures/armpi_fpv_step_2_ideally_controlled.mp4" width="600" controls></video>
+https://github.com/user-attachments/assets/756b453a-f0ce-4d4d-bd4d-f10c7659fabb
 
 ## Forward and inverse kinematics
 
