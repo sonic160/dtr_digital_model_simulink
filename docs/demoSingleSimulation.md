@@ -54,7 +54,10 @@ robotSimulator.runSimulation(motorCmds, failureType);
 
 ![figure_3.png](figures/demoSingleSimulation_media/figure_3.png)
 
-<video src="figures/robot_simulation_no_failure.mp4" width="600" controls></video>
+
+https://github.com/user-attachments/assets/76e6d024-1db7-488a-92b0-55523e5e03eb
+
+
 
 ## Simulate motor errors due to position sensor accuracy
 
