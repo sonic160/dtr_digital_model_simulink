@@ -33,6 +33,18 @@ classdef DataLoader < RobotSimulator
         end
 
 
+        function X = extractFeaturesOriginal(~, X)
+            % Get the orginal features: Motor commands and end-effector
+            % trajectory responses.
+            for index = 1:numel(X)
+                tmp = X{index};
+                % We drop the time, and the commands on the motor level.
+                tmp = table2array(tmp(:, [2:5 10:12]));
+                X{index} = tmp;
+            end
+        end
+
+
         function X = extractFeaturesTrajCmdTrajResidual(~, X)
             % Add an additional feature of the residual.
             for index = 1:numel(X)
