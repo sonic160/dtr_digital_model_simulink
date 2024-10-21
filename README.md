@@ -59,19 +59,13 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
     </li>
+    <li><a href="#structure-of-this-repository">Structure of this repository</a></li>
     <li>
       <a href="#getting-started">Getting Started</a>
-      <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
-      </ul>
     </li>
     <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#development-roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
@@ -143,9 +137,9 @@ Here are some examples showing the most common usage of this repository:
 - [A tutorial on how to build a multibody tree model in Simulink from the URDF file of a robot, and run inverse and forward kinematics simulation in simulink.][tutorial-multibody-tree]
 - [How to use the `RobotSimulator` class to a simulation on the developed digital model.][tutorial-robot-simulation]
 - [Generate training data for the fault diagnosis model using the digital twin.][tutorial-generate-training-data]
-- Train an AI model based on the simulated training data.
-- Collect test data from real robot.
-- Test the model trained on simulation data on test data collected from real the real robot.
+- [Train an AI model based on the simulated training data.][tutorial-train-on-simulation-data]
+- Collect test data from real robot (to be completed).
+- [Test the model trained on simulation data on test data collected from real the real robot.][tutorial-train-sim-test-real]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -233,5 +227,6 @@ This project benifits from the following open source projects:
 [tutorial-robot-simulation]: docs/demoSingleSimulation.md
 [armpi-fpv]: https://www.hiwonder.com/products/armpi-fpv?variant=39341129203799&srsltid=AfmBOop6vbvRGOxpcJ9fYdwK-CkRZYqJ7E9q5UzSxUSzi-xGNSe9NQmC
 [tutorial-generate-training-data]: docs/generateTrainingData.md
-
+[tutorial-train-on-simulation-data]: docs/trainOnSimulationData.md
+[tutorial-train-sim-test-real]: docs/trainSimTestReal.md
 
