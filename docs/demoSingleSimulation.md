@@ -58,7 +58,6 @@ robotSimulator.runSimulation(motorCmds, failureType);
 https://github.com/user-attachments/assets/76e6d024-1db7-488a-92b0-55523e5e03eb
 
 
-
 ## Simulate motor errors due to position sensor accuracy
 
 In the real robot, due to the limitation of the accuracy of position sensors, each motor has some small errors even when no failure is presented. To simulate this, we assume that the motor shows a constant steady-state error every errorBlockSize points. During this period, the error follows a discrete distribution described by errorValues and its probabilities errorProb.
@@ -82,6 +81,7 @@ robotSimulator.runSimulation(motorCmds, failureType);
 ![figure_6.png](figures/demoSingleSimulation_media/figure_6.png)
 
 ![figure_7.png](figures/demoSingleSimulation_media/figure_7.png)
+
 
 ## Use `TrajectoryGenerator` class to generate a trajectory for simulation
 
@@ -123,6 +123,12 @@ robotSimulator.runSimulation(motorCmds, failureType);
 
 ![figure_11.png](figures/demoSingleSimulation_media/figure_11.png)
 
+
+https://github.com/user-attachments/assets/73911063-3631-496b-957b-c9316d116ed2
+
+The same type of random movement is going to be used to generate training data for the fault diagnosis algorithm and test data on the real robot. More precisely, the movement takes $10$ seconds, and it comprises of five segments. Each segment takes $2$ seconds. In a single segment, each motor turns to a random position in a ramp-up phase, and then hold to this position until the end of this segment.
+
+
 ## Simulate stuck failure
 
 Setting variable `failure_type` from $0$ to $1,\cdots ,5$ simulate the stuck failure of motor $1$ to motor $5$, respectivley. You can experiment and see the difference in the realized trajectory. Below, we show a demo of simulating a stuck failure of motor 1.
@@ -163,6 +169,10 @@ robotSimulator.runSimulation(motorCmds, failureType);
 ![figure_14.png](figures/demoSingleSimulation_media/figure_14.png)
 
 ![figure_15.png](figures/demoSingleSimulation_media/figure_15.png)
+
+https://github.com/user-attachments/assets/4eb1134d-dea6-40b8-a265-8a0c6c4ec300
+
+It can be seen that motor $1$ gets stuck. This is one of the two failure modes we intend to diagnose, using only measurement of the movement trajectory of the end-effector.
 
 
 ## Simulate steady-state error
@@ -206,3 +216,9 @@ robotSimulator.runSimulation(motorCmds, failureType);
 ![figure_18.png](figures/demoSingleSimulation_media/figure_18.png)
 
 ![figure_19.png](figures/demoSingleSimulation_media/figure_19.png)
+
+
+https://github.com/user-attachments/assets/97276d0b-1fb6-41a0-a896-1a818267ff1f
+
+In this simulation, motor $1$ shows a steady-state error beyond normal range. Compared to the stuck failure, this failure mode is apparently more difficult to diagnose as the system-level output is more similar to the norminal case.
+
