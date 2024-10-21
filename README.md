@@ -142,6 +142,7 @@ git clone https://github.com/sonic160/dtr_digital_model_simulink.git
 Here are some examples showing the most common usage of this repository:
 - [A tutorial on how to build a multibody tree model in Simulink from the URDF file of a robot, and run inverse and forward kinematics simulation in simulink.][tutorial-multibody-tree]
 - [How to use the `RobotSimulator` class to a simulation on the developed digital model.][tutorial-robot-simulation]
+- [Generate training data for the fault diagnosis model using the digital twin.][tutorial-generate-training-data]
 - Train an AI model based on the simulated training data.
 - Collect test data from real robot.
 - Test the model trained on simulation data on test data collected from real the real robot.
@@ -231,5 +232,6 @@ This project benifits from the following open source projects:
 [tutorial-multibody-tree]: docs/create_multibody_tree.md
 [tutorial-robot-simulation]: docs/demoSingleSimulation.md
 [armpi-fpv]: https://www.hiwonder.com/products/armpi-fpv?variant=39341129203799&srsltid=AfmBOop6vbvRGOxpcJ9fYdwK-CkRZYqJ7E9q5UzSxUSzi-xGNSe9NQmC
+[tutorial-generate-training-data]: docs/generateTrainingData.md
 
 
