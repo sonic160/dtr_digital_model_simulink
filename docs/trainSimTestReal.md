@@ -11,7 +11,7 @@ First, we download previously generated training (through simulation) and test (
    -  testDatasets: Contain the test data transformed into the Matlab format. 
    -  dataset_descrpitions.txt: Describe the settings for generating each training and test dataset. 
 
-You can either download the dataset from [this link](http://%27https//nextcloud.centralesupelec.fr/s/7AR6aamBZNXcRM8/download'). Then, you should unzip the downloaded file and put the folder `dataset` under the root dictionary. Or you can directly run this code to download the dataset. Depending on the network condition, it migth take up to 20 mins to download the dataset.
+You can either download the dataset from [this link](https://nextcloud.centralesupelec.fr/s/7AR6aamBZNXcRM8/download). Then, you should unzip the downloaded file and put the folder `dataset` under the root dictionary. Or you can directly run this code to download the dataset. Depending on the network condition, it migth take up to 20 mins to download the dataset.
 
 ```matlab:Code
 url = 'https://nextcloud.centralesupelec.fr/s/7AR6aamBZNXcRM8/download';
