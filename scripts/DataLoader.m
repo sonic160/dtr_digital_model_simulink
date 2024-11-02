@@ -601,5 +601,38 @@ classdef DataLoader < RobotSimulator
         end
 
 
+        function [X, M, S] = standardization(~, X, M, S)
+            % This function normalizes the features.
+            % Input: X is an cell array of 1*n_data, whose elements are matrixs of
+            % (n_seq, n_features).
+            % Output: X: The features after transformation.
+            % The dimension is transposed: (n_features, n_seq)
+        
+            if nargin == 2
+                % Concatenate all the features. Creat a matrix of (n_seq*n_data,
+                % n_features).
+                allFeatures = cat(1, X{:});
+            
+                % Do the normalization.
+                M = mean(allFeatures);
+                S = std(allFeatures);
+            end
+            
+            for index = 1:numel(X)
+               X{index} =  ((X{index} - M)./S)';
+            end
+        end
+
+
+        function X = downsamling(~, X, interaval)
+            % This function downsample a timeseries every interval points. 
+            % To improve training efficiency with shorter sequence.
+            for i = 1:numel(X)
+                X_tmp = X{i};
+                X{i} = X_tmp(1:interaval:end, :);
+            end
+        end       
+
+
     end
 end
