@@ -143,6 +143,7 @@ Here are some examples showing the most common usage of this repository:
 - [Train an AI model based on the simulated training data.][tutorial-train-on-simulation-data]
 - Collect test data from real robot (to be completed).
 - [Test the model trained on simulation data on test data collected from real the real robot.][tutorial-train-sim-test-real]
+- [Our publication on how to use the digital twin to train a fault diagnosis model.][paper-1] and the [code](scripts/trainSimTestRealRepeat.mlx) related to its implementation.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -181,7 +182,9 @@ Don't forget to give the project a star! Thanks again!
 <!-- LICENSE -->
 ## License
 
-Code and documentation copyright 2023- the authors. Code released and distributed under the MIT License. See `LICENSE.txt` for more information.
+Code and documentation copyright 2023- the authors. Code released and distributed under the MIT License. See `LICENSE.txt` for more information. If you plan to use the model/dataset for research purposes, please cite the following papers:
+
+Court, K.M., Court, X.M., Du, S. and Zeng, Z., 2024. Use Digital Twins to Support Fault Diagnosis From System-level Condition-monitoring Data. arXiv preprint [https://arxiv.org/abs/2411.01360][paper-1].
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -232,6 +235,7 @@ This project benifits from the following open source projects:
 [tutorial-generate-training-data]: docs/generateTrainingData.md
 [tutorial-train-on-simulation-data]: docs/trainOnSimulationData.md
 [tutorial-train-sim-test-real]: docs/trainSimTestReal.md
+[paper-1]:https://arxiv.org/abs/2411.01360
 
 
 ## Contributors ✨
