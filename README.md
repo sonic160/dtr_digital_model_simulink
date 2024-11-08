@@ -93,6 +93,10 @@ A schematic of the digital model is given below to highlight its composition and
 
 As a use case of this digital model, you will find a script and tutorial on how to use this digital model to generate simulated failure data to train a fault diagnosis model in the virtual space. Then, you will also find scripts and tutorials to run tests on a physical robot and collect data using the digital twin of it. The collected data are, then, used to evaluate the performance of the AI modeled trained by the simulation data.
 
+For more details, please refer to this papers:
+
+Court, K.M., Court, X.M., Du, S. and Zeng, Z., 2024. Use Digital Twins to Support Fault Diagnosis From System-level Condition-monitoring Data. arXiv preprint [https://arxiv.org/abs/2411.01360][paper-1].
+
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
