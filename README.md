@@ -210,7 +210,7 @@ Zhiguo Zeng - zhiguo.zeng@centralesupelec.fr
 This work is partially supported by the French Research Council (ANR) JCJC projct Digital Failure Twin under contract number ANR-22-CE10-0004.
 
 This project benifits from the following open source projects:
-- To be updated.
+- [Fault Detection Using LSTM Deep Learning Classification][matworks-example]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -240,6 +240,7 @@ This project benifits from the following open source projects:
 [tutorial-train-on-simulation-data]: docs/trainOnSimulationData.md
 [tutorial-train-sim-test-real]: docs/trainSimTestReal.md
 [paper-1]:https://arxiv.org/abs/2411.01360
+[mathworks-example]:https://github.com/matlab-deep-learning/Fault-Detection-Using-Deep-Learning-Classification
 
 
 ## Contributors ✨
