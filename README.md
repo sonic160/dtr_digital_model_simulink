@@ -22,12 +22,13 @@
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
 [![Contributors][contributors-shield]][contributors-url]
+[![Open in MATLAB Online][(https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)][matlab-online-link]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
-[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)][matlab-online-link]
+
 
 
 <!-- PROJECT LOGO -->
