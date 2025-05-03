@@ -27,7 +27,7 @@
 [![Issues][issues-shield]][issues-url]
 [![MIT License][license-shield]][license-url]
 [![LinkedIn][linkedin-shield]][linkedin-url]
-
+[![Open in MATLAB Online][matlab-online-link]
 
 
 <!-- PROJECT LOGO -->
@@ -237,10 +237,11 @@ This project benifits from the following open source projects:
 [tutorial-robot-simulation]: docs/demoSingleSimulation.md
 [armpi-fpv]: https://www.hiwonder.com/products/armpi-fpv?variant=39341129203799&srsltid=AfmBOop6vbvRGOxpcJ9fYdwK-CkRZYqJ7E9q5UzSxUSzi-xGNSe9NQmC
 [tutorial-generate-training-data]: docs/generateTrainingData.md
-[tutorial-train-on-simulation-data]: docs/trainOnSimulationData.md
+[tutorial-train-on-simulation-data]: docs/trainOnSimulationData.md[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=sonic160/dtr_digital_model_simulink)
 [tutorial-train-sim-test-real]: docs/trainSimTestReal.md
 [paper-1]:https://arxiv.org/abs/2411.01360
 [mathworks-example]:https://github.com/matlab-deep-learning/Fault-Detection-Using-Deep-Learning-Classification
+[matlab-online-link]:https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=sonic160/dtr_digital_model_simulink
 
 
 ## Contributors ✨
