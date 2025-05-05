@@ -1,6 +1,7 @@
 <!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <!-- ALL-CONTRIBUTORS-BADGE:START - Do not remove or modify this section -->
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors-)
+[![All Contributors](https://img.shields.io/badge/all_contributors-3-orange.svg?style=flat-square)](#contributors-)
+[![Open in MATLAB Online](https://www.mathworks.com/images/responsive/global/open-in-matlab-online.svg)](https://matlab.mathworks.com/open/github/v1?repo=sonic160/dtr_digital_model_simulink)
 <!-- ALL-CONTRIBUTORS-BADGE:END -->
 <a id="readme-top"></a>
 <!--
@@ -92,6 +93,10 @@ A schematic of the digital model is given below to highlight its composition and
 <img src="docs/figures/sys_illustration.png" alt="A schematic of the digital model." style="width:600px;"/>
 
 As a use case of this digital model, you will find a script and tutorial on how to use this digital model to generate simulated failure data to train a fault diagnosis model in the virtual space. Then, you will also find scripts and tutorials to run tests on a physical robot and collect data using the digital twin of it. The collected data are, then, used to evaluate the performance of the AI modeled trained by the simulation data.
+
+For more details, please refer to this papers:
+
+Court, K.M., Court, X.M., Du, S. and Zeng, Z., 2024. Use Digital Twins to Support Fault Diagnosis From System-level Condition-monitoring Data. arXiv preprint [https://arxiv.org/abs/2411.01360][paper-1].
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -206,7 +211,7 @@ Zhiguo Zeng - zhiguo.zeng@centralesupelec.fr
 This work is partially supported by the French Research Council (ANR) JCJC projct Digital Failure Twin under contract number ANR-22-CE10-0004.
 
 This project benifits from the following open source projects:
-- To be updated.
+- [Fault Detection Using LSTM Deep Learning Classification](https://github.com/matlab-deep-learning/Fault-Detection-Using-Deep-Learning-Classification)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -236,6 +241,7 @@ This project benifits from the following open source projects:
 [tutorial-train-on-simulation-data]: docs/trainOnSimulationData.md
 [tutorial-train-sim-test-real]: docs/trainSimTestReal.md
 [paper-1]:https://arxiv.org/abs/2411.01360
+[mathworks-example]:https://github.com/matlab-deep-learning/Fault-Detection-Using-Deep-Learning-Classification
 
 
 ## Contributors ✨
@@ -249,6 +255,8 @@ Thanks goes to these wonderful people ([emoji key](https://allcontributors.org/d
   <tbody>
     <tr>
       <td align="center" valign="top" width="14.28%"><a href="https://github.com/sonic160"><img src="https://avatars.githubusercontent.com/u/25298455?v=4?s=100" width="100px;" alt="sonic160"/><br /><sub><b>sonic160</b></sub></a><br /><a href="#projectManagement-sonic160" title="Project Management">📆</a> <a href="https://github.com/sonic160/dtr_digital_model_simulink/commits?author=sonic160" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/KillianMcCourt"><img src="https://avatars.githubusercontent.com/u/119616832?v=4?s=100" width="100px;" alt="KillianMcCourt"/><br /><sub><b>KillianMcCourt</b></sub></a><br /><a href="https://github.com/sonic160/dtr_digital_model_simulink/commits?author=KillianMcCourt" title="Code">💻</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/X1M1C1"><img src="https://avatars.githubusercontent.com/u/119295053?v=4?s=100" width="100px;" alt="X1M1C1"/><br /><sub><b>X1M1C1</b></sub></a><br /><a href="https://github.com/sonic160/dtr_digital_model_simulink/commits?author=X1M1C1" title="Code">💻</a></td>
     </tr>
   </tbody>
 </table>
