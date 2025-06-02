@@ -60,10 +60,10 @@ methods
         obj.lenTimeSeries = lenTimeSeries;
         obj.simulationTime = simulationTime;
         % Calculate the endtime of the sequence.    
-        endTime = (lenTimeSeries-1)*simulationTime/lenTimeSeries; % The time that the last point corresponds to.
+        %endTime = (lenTimeSeries-1)*simulationTime/lenTimeSeries; % The time that the last point corresponds to.
         % Get the time steps of the sequence.
         timeInterval = simulationTime/lenTimeSeries;
-        obj.simulationTimeStamps = 0:timeInterval:endTime;
+        obj.simulationTimeStamps = timeInterval:timeInterval:simulationTime;
         
         % Set initial values for the traj cmd and responses.
         obj.trajCommands = zeros(lenTimeSeries, 3);
@@ -265,7 +265,6 @@ methods
         motorRespsRadius{failedMotorIdx}.Data = failedRespValues;
     end
     
-    
     function motorRespsRadius = simulateMotorResponses(self, inputMotorCmds)
     % This function simulate the responses of the five motors given their
     % control commands.
@@ -291,7 +290,10 @@ methods
         end
         
         % Run the simulation and get the response of the five motors.
-        out = sim(self.simulinkMdl);
+        out = sim(self.simulinkMdl, ...
+            'StopTime', num2str(self.simulationTime), ...
+            'SolverType', 'Fixed-step', ...
+            'FixedStep', num2str(self.simulationTime/self.lenTimeSeries));
         
         % Extract the outputs.
         motorRespsRadius = {out.j1_resp, out.j2_resp, out.j3_resp, ...
@@ -520,7 +522,10 @@ methods
             assignin('base', ['j' num2str(i) '_resp'], responses{i});
         end        
         % Run simulation to visualize the results.
-        sim(self.visualizationMdl);
+        sim(self.visualizationMdl, ...
+            'StopTime', num2str(self.simulationTime), ...
+            'SolverType', 'Variable-step', ...
+            'Solver', 'ode45');
     end
 
 
