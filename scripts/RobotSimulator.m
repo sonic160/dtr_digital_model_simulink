@@ -20,8 +20,24 @@ properties
     simulinkMdl = 'main3_armpi_fpv.slx';
     visualizationMdl = 'robot_model_visualization.slx'
     fkMdl = 'robot_model';
-    joint1Damping = 0; % Damping for joint 1.
-    joint2Damping = 0; % Damping for joint 2.
+
+    % Parameers for the joints.
+    joint1Init = 0; % Initial position for joint 1.
+    joint1Damping = 167; % Damping for joint 1 (N*m/rad).
+    joint1Stiffness = .0368; % Stiffness for joint 1 (N*m/*s/rad).
+    
+    joint2Init = 0;
+    joint2Damping = 245; 
+    joint2Stiffness = .05616;
+
+    joint3Init = 0; % Initial position for joint 1.
+    joint3Damping = 167; % Damping for joint 1 (N*m/rad).
+    joint3Stiffness = .0368; % Stiffness for joint 1 (N*m/*s/rad).
+    
+    joint4Init = 0; % Initial position for joint 1.
+    joint4Damping = 167; % Damping for joint 1 (N*m/rad).
+    joint4Stiffness = .0368; % Stiffness for joint 1 (N*m/*s/rad).
+
     dampPince = 1000; % Dampoing for the gripper.
 
     % Cmd and responses.
@@ -33,7 +49,7 @@ properties
     trajResponses;
     
 
-    failureType = 0; % Failure type. Integal between 0 - 8.
+    failureSimulationMode = 0; % Do we inject position errors on the motors. 0 - Yes, -1 - no.
     visualization = 1; % If we want visualize the results of the simulation.
 
     % Define motor accuracy.
@@ -78,9 +94,28 @@ methods
         load_system(obj.fkMdl);
 
         % Initialize the simulink parameters.
-        assignin('base', 'joint1_damping', obj.joint1Damping);
-        assignin('base', 'joint2_damping', obj.joint2Damping);
-        assignin('base', 'damp_pince', obj.dampPince);
+        obj.setModelParameters();
+    end
+
+
+    function setModelParameters(self)
+    % This function sets the model parameters of the simulink model.
+        assignin('base', 'joint1_init', self.joint1Init);
+        assignin('base', 'joint2_init', self.joint2Init);
+        assignin('base', 'joint3_init', self.joint3Init);
+        assignin('base', 'joint4_init', self.joint4Init);
+
+        assignin('base', 'joint1_damping', self.joint1Damping);
+        assignin('base', 'joint2_damping', self.joint2Damping);
+        assignin('base', 'joint3_damping', self.joint3Damping);
+        assignin('base', 'joint4_damping', self.joint4Damping);
+
+        assignin('base', 'joint1_stiffness', self.joint1Stiffness);
+        assignin('base', 'joint2_stiffness', self.joint2Stiffness);
+        assignin('base', 'joint3_stiffness', self.joint3Stiffness);
+        assignin('base', 'joint4_stiffness', self.joint4Stiffness);
+
+        assignin('base', 'damp_pince', self.dampPince);
     end
     
     
@@ -105,7 +140,7 @@ methods
         self.motorCommandsRadius = self.cmdsUnit2Radius(motorCmds);
 
         % Choose different simulation function based on the value of failure_type. 
-        if failureType==0 % No failure.
+        if failureType<=0 % No failure.
             % Simulate the influence on the motor 
             motorRespsRadius = self.simulateMotorResponses(motorCmds);
         end
@@ -240,7 +275,6 @@ methods
     end
 
 
-
     function motorRespsRadius = simulateMotorStuck(self, inputMotorCmds, failedMotorIdx)
     % This function runs a single simulation of the robot trajectory when one
     % motor get stuck.
@@ -265,6 +299,7 @@ methods
         motorRespsRadius{failedMotorIdx}.Data = failedRespValues;
     end
     
+    
     function motorRespsRadius = simulateMotorResponses(self, inputMotorCmds)
     % This function simulate the responses of the five motors given their
     % control commands.
@@ -277,8 +312,10 @@ methods
     % - motorRespsRadius: 1*5 cell array, each element is a timeseries of
     % the motor responses, in radius.
         
-        % Simulate the position errors due to motor accuracy.
-        inputMotorCmds = self.addPositionError(inputMotorCmds);
+        if self.failureSimulationMode >= 0 % We exclude the case where we do not consider the motor inaccuracy and delay time.
+            % Simulate the position errors due to motor accuracy.
+            inputMotorCmds = self.addPositionError(inputMotorCmds);
+        end
 
         % Transform the scales of the motor positions.
         % Get the control command in the correct format.
@@ -290,14 +327,51 @@ methods
         end
         
         % Run the simulation and get the response of the five motors.
-        out = sim(self.simulinkMdl, ...
-            'StopTime', num2str(self.simulationTime), ...
-            'SolverType', 'Fixed-step', ...
-            'FixedStep', num2str(self.simulationTime/self.lenTimeSeries));
-        
-        % Extract the outputs.
-        motorRespsRadius = {out.j1_resp, out.j2_resp, out.j3_resp, ...
-            out.j4_resp, out.j5_resp};
+        if strcmp(self.simulinkMdl, 'main3_armpi_fpv.slx') % If the version of simulation model is the older one.
+            out = sim(self.simulinkMdl, ...
+                'StopTime', num2str(self.simulationTime), ...
+                'SolverType', 'Fixed-step', ...
+                'FixedStep', num2str(self.simulationTime/self.lenTimeSeries));
+            motorRespsRadius = {out.j1_resp, out.j2_resp, out.j3_resp, ...
+                out.j4_resp, out.j5_resp};
+        else % If we use the new version of the model.
+            out = sim(self.simulinkMdl, ...
+                'StopTime', num2str(self.simulationTime), ...
+                'SolverType', 'Variable-step', ...
+                'Solver', 'ode45');
+            motorRespsRadius = {out.j1_resp, out.j2_resp, out.j3_resp, ...
+                out.j4_resp, out.j5_resp};
+
+            % Since we use ode45, we nmight have more fine simulation time as
+            % compared to the command timeseries. We extract from the response
+            % the command instants.
+    
+            % Tolerance for comparison
+            tol = 1e-6;
+            for i = 1:numel(motorRespsRadius) % For each motor
+                % Get the response sequence.
+                tmp_resp = motorRespsRadius{i};
+                
+                % Get the time for cmd and resp.
+                tmp_time_resp = tmp_resp.Time;            
+                tmp_time_cmd = self.motorCommands{i}.Time;
+    
+                % Values of the responses.
+                tmp_resp_values = tmp_resp.Data;
+                
+                % Extract the matched points.
+                % Logical mask for matching elements
+                mask = false(size(tmp_time_resp));
+                for j = 1:length(tmp_time_cmd)
+                    mask = mask | abs(tmp_time_resp - tmp_time_cmd(j)) < tol;
+                end            
+                % Get the indices of matching elements
+                tmp_resp_values = tmp_resp_values(mask>0);
+    
+                % Revise the motor response to keep only the command points.
+                motorRespsRadius{i} = timeseries(tmp_resp_values, tmp_time_cmd);
+            end
+        end                     
     end
 
 
